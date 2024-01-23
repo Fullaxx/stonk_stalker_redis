@@ -3,6 +3,7 @@
 
 import os
 import sys
+import csv
 import json
 import time
 import redis
@@ -102,20 +103,20 @@ def gen_daily_csv(df, csv_filename):
 	df = df.round(decimals=2)
 	df.to_csv(csv_filename, index=True, sep=',', encoding='utf-8')
 
-def gen_daily_csvs(pickle_filename, symb_list):
+def gen_daily_csvs(pickle_filename, symb_list, r):
 	ticker = pd.read_pickle(pickle_filename)
 	for symb in symb_list:
 		df = ticker[symb].copy()
 		csv_filename = f'{g_datadir}/{symb}.1d.csv'
 		gen_daily_csv(df, csv_filename)
 		macro = get_macro_indicators(csv_filename, None)
-		push_macro_indicators_to_redis(symb)
+		push_macro_indicators_to_redis(r, symb)
 
 def download_daily_bars(r, symb_list):
 	with suppress(FileExistsError): os.mkdir(g_datadir)
 	data = yf.download(symb_list, period='1y', interval='1d', group_by='ticker', progress=False)
 	data.to_pickle(f'{g_datadir}/daily.pickle')
-	gen_daily_csvs(f'{g_datadir}/daily.pickle', symb_list)
+	gen_daily_csvs(f'{g_datadir}/daily.pickle', symb_list, r)
 	shutil.rmtree(g_datadir)
 
 def every_min(r, now, symb_list):
