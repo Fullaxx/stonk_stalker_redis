@@ -1,0 +1,6 @@
+aioredis
+pandas
+pandas_ta
+pyzmq
+redis[hiredis]
+yfinance
