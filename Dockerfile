@@ -16,6 +16,7 @@ MAINTAINER Brett Kuskie <fullaxx@gmail.com>
 # ------------------------------------------------------------------------------
 # Set environment variables
 ENV DEBIAN_FRONTEND noninteractive
+ENV TZ US/Eastern
 
 # ------------------------------------------------------------------------------
 # Install software and clean up
