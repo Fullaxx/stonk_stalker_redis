@@ -116,7 +116,7 @@ def download_daily_bars(r, symb_list):
 	data = yf.download(symb_list, period='1y', interval='1d', group_by='ticker', progress=False)
 	data.to_pickle(f'{g_datadir}/daily.pickle')
 	gen_daily_csvs(f'{g_datadir}/daily.pickle', symb_list)
-#	shutil.rmtree(g_datadir)
+	shutil.rmtree(g_datadir)
 
 def every_min(r, now, symb_list):
 	mstamp = now.strftime('%H%M')
@@ -149,6 +149,6 @@ if __name__ == '__main__':
 		now = datetime.now(tz)
 		now_sec = int(now.strftime('%s'))
 		if (now_sec % 60 == 0) and (now_sec > last_trigger):
-			update_symbols(r, now, symb_list)
+			every_min(r, now, symb_list)
 			last_trigger = now_sec
 		usleep(1000)
