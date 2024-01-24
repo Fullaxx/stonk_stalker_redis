@@ -34,7 +34,7 @@ RUN apt-get update && \
 # Prepare the image
 COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY prices2redis.py bars2redis.py /app/
+COPY prices2redis.py bars2redis.py get_market_data.py /app/
 #COPY --from=build /src/dashboard.exe /app/
 
 # ------------------------------------------------------------------------------
