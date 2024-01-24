@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pip3 install redis yfinance
+# pip3 install redis pandas pandas_ta yfinance
 
 import os
 import sys
@@ -29,9 +29,6 @@ def signal_handler(sig, frame):
 def bailmsg(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 	exit(1)
-
-def push_macro_indicators_to_redis(r, symb):
-	pass
 
 def get_macro_indicators(filename, before_this_date):
 	if not os.path.exists(filename): return None
@@ -103,20 +100,26 @@ def gen_daily_csv(df, csv_filename):
 	df = df.round(decimals=2)
 	df.to_csv(csv_filename, index=True, sep=',', encoding='utf-8')
 
-def gen_daily_csvs(pickle_filename, symb_list, r):
+def gen_daily_indicators(pickle_filename, symb_list, r):
 	ticker = pd.read_pickle(pickle_filename)
+	daily_macro_list = []
 	for symb in symb_list:
 		df = ticker[symb].copy()
 		csv_filename = f'{g_datadir}/{symb}.1d.csv'
 		gen_daily_csv(df, csv_filename)
 		macro = get_macro_indicators(csv_filename, None)
-		push_macro_indicators_to_redis(r, symb)
+		daily_indicators = {symb: macro}
+		daily_macro_list.append(daily_indicators)
+#	pprint(daily_macro_list)
+	daily_indicators_str = json.dumps(daily_macro_list)
+#	print(daily_indicators_str)
+	r.set('MARKET:DAILYINDICATORS', daily_indicators_str)
 
 def download_daily_bars(r, symb_list):
 	with suppress(FileExistsError): os.mkdir(g_datadir)
 	data = yf.download(symb_list, period='1y', interval='1d', group_by='ticker', progress=False)
 	data.to_pickle(f'{g_datadir}/daily.pickle')
-	gen_daily_csvs(f'{g_datadir}/daily.pickle', symb_list, r)
+	gen_daily_indicators(f'{g_datadir}/daily.pickle', symb_list, r)
 	shutil.rmtree(g_datadir)
 
 def every_min(r, now, symb_list):
@@ -139,13 +142,13 @@ if __name__ == '__main__':
 	signal.signal(signal.SIGTERM, signal_handler)
 	signal.signal(signal.SIGQUIT, signal_handler)
 
+	symb_list = symbols_str.split(' ')
+	if os.getenv('DOITNOW') is not None:
+		download_daily_bars(r, symb_list)
+		exit(0)
+
 	last_trigger = 0
 	tz = timezone('US/Eastern')
-	symb_list = symbols_str.split(' ')
-
-#	download_daily_bars(r, symb_list)
-#	exit(0)
-
 	while not g_shutdown:
 		now = datetime.now(tz)
 		now_sec = int(now.strftime('%s'))
