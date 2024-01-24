@@ -61,6 +61,9 @@ if __name__ == '__main__':
 	signal.signal(signal.SIGTERM, signal_handler)
 	signal.signal(signal.SIGQUIT, signal_handler)
 
+	update_symbols(r, symbols_str)
+	time.sleep(1)
+
 	last_trigger = 0
 	tz = timezone('US/Eastern')
 	while not g_shutdown:
