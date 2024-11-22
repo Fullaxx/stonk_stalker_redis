@@ -23,7 +23,7 @@ def bailmsg(*args, **kwargs):
 	sys.exit(1)
 
 def save_symbol(r, symbol):
-	key = f'SYMBOLSET'
+	key = f'SSCFG:SYMBOLSET'
 	num_updated = r.sadd(key, symbol)
 #	print(f'{key} {symbol:>9}: {num_updated}')
 
