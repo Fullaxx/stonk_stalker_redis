@@ -11,12 +11,12 @@
 # ------------------------------------------------------------------------------
 # Pull base image
 FROM redis:bookworm
-MAINTAINER Brett Kuskie <fullaxx@gmail.com>
+LABEL AUTHOR="Brett Kuskie <fullaxx@gmail.com>"
 
 # ------------------------------------------------------------------------------
 # Set environment variables
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ US/Eastern
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=US/Eastern
 
 # ------------------------------------------------------------------------------
 # Install software and clean up
