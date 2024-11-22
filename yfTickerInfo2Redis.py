@@ -54,7 +54,7 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 
 	acquire_environment()
-	r = connect_to_redis(os.getenv('REDIS_URL'), True, g_debug_python)
+	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
 	res = yf.Ticker(args.symbol)
 
 	delete_if_exists(res.info, 'companyOfficers')
