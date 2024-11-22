@@ -1,4 +1,3 @@
-aioredis
 pandas
 pandas_ta
 pyzmq
