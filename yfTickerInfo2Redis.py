@@ -28,9 +28,9 @@ def push_info_to_redis(r, symbol, info):
 	key = f'YFINANCE:INFO:{symbol}'
 	result = r.set(key, info_str)
 	if result:
-		print(f'SET {key} ${cp}')
+		print(f'SET {key:<20} ${cp}')
 	else:
-		print(f'SET {key} FAIED!')
+		print(f'SET {key:<20} FAILED!')
 
 def delete_if_exists(stock_d, key):
 	if key in stock_d:

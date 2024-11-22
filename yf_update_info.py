@@ -24,6 +24,8 @@ if __name__ == '__main__':
 		symbols = tbl.split('=')[1]
 		symb_list += symbols.split(',')
 
+#	When this loop is done, it will exit 0
+#	Current Design: supervisord will restart it automatically
 	for symb in symb_list:
 		os.system(f'/app/yfTickerInfo2Redis.py -s {symb}')
 		time.sleep(request_interval)
