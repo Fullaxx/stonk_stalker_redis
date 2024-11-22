@@ -1,12 +1,12 @@
 # ------------------------------------------------------------------------------
 # Install build tools and compile the code
-#FROM debian:bookworm-slim AS build
-#ADD src /src
-#WORKDIR /src
-#RUN apt-get update && \
-#	apt-get install -y build-essential \
-#	  libmicrohttpd-dev libhiredis-dev && \
-#	./compile.sh
+FROM debian:bookworm-slim AS build
+ADD darkhttpd /dark
+WORKDIR /dark
+RUN apt-get update && \
+	apt-get install -y build-essential && \
+	gcc -Wall -O2 darkhttpd.c -o darkhttpd.exe && \
+	strip darkhttpd.exe
 
 # ------------------------------------------------------------------------------
 # Pull base image
@@ -36,7 +36,7 @@ COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY yf_update_info.py redis_helpers.py yfTickerInfo2Redis.py create_marketdb.py /app/
 #COPY prices2redis.py bars2redis.py get_market_data.py /app/
-#COPY --from=build /src/dashboard.exe /app/
+COPY --from=build /dark/darkhttpd.exe /app/
 
 # ------------------------------------------------------------------------------
 # Expose ports
