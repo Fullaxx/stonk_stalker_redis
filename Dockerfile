@@ -23,7 +23,7 @@ ENV TZ=US/Eastern
 COPY requirements.txt /install/
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	  libmicrohttpd12 libhiredis0.14 supervisor python3-pip && \
+	  libmicrohttpd12 libhiredis0.14 lsof supervisor tree python3-pip && \
 	pip3 install --break-system-packages -r /install/requirements.txt && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
@@ -35,7 +35,7 @@ RUN apt-get update && \
 COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY yf_update_info.py redis_helpers.py yfTickerInfo2Redis.py create_marketdb.py /app/
-#COPY prices2redis.py bars2redis.py get_market_data.py /app/
+COPY static/* /www/static/
 COPY --from=build /dark/darkhttpd.exe /app/
 
 # ------------------------------------------------------------------------------
