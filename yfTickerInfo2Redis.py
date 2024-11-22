@@ -22,7 +22,12 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def push_info_to_redis(r, symbol, info):
+def save_symbol(r, symbol):
+	key = f'SYMBOLSET'
+	num_updated = r.sadd(key, symbol)
+#	print(f'{key} {symbol:>9}: {num_updated}')
+
+def save_info(r, symbol, info):
 	cp = info['currentPrice']
 	info_str = json.dumps(info)
 	key = f'YFINANCE:INFO:{symbol}'
@@ -59,4 +64,5 @@ if __name__ == '__main__':
 
 	delete_if_exists(res.info, 'companyOfficers')
 	delete_if_exists(res.info, 'longBusinessSummary')
-	push_info_to_redis(r, args.symbol, res.info)
+	save_info(r, args.symbol, res.info)
+	save_symbol(r, args.symbol)
