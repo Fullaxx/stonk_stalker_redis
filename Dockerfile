@@ -27,14 +27,14 @@ RUN apt-get update && \
 	pip3 install --break-system-packages -r /install/requirements.txt && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
-	mkdir /run/redis /var/log/redis && \
-	chown redis:redis /run/redis /var/log/redis
+	mkdir /run/redis /var/log/redis /www && \
+	chown redis:redis /run/redis /var/log/redis /www
 
 # ------------------------------------------------------------------------------
 # Prepare the image
 COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY yf_update_info.py yfTickerInfo2Redis.py redis_helpers.py /app/
+COPY yf_update_info.py redis_helpers.py yfTickerInfo2Redis.py create_marketdb.py /app/
 #COPY prices2redis.py bars2redis.py get_market_data.py /app/
 #COPY --from=build /src/dashboard.exe /app/
 
