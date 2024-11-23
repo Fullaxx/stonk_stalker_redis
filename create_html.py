@@ -130,7 +130,7 @@ if __name__ == '__main__':
 	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
 
 	json_update_interval = os.getenv('FETCH_INTERVAL')
-	if json_update_interval is None: json_update_interval = '60000'
+	if json_update_interval is None: json_update_interval = '2000'
 
 	sleep_time = 30
 	if os.getenv('SLEEP_TIME') is not None:
