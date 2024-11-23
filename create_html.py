@@ -141,4 +141,4 @@ if __name__ == '__main__':
 
 	gen_index_html(tables_list, yfi_fetch_interval)
 	time.sleep(2)
-	// Sleep for a bit so supervisord knows all is well
+#	Sleep for a bit so supervisord knows all is well
