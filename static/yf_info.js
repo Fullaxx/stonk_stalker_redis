@@ -125,7 +125,7 @@ function update_yf_info()
   });
 }
 
-function symbol_init(yfi_fetch_interval)
+function yf_info_init(yfi_fetch_interval)
 {
   update_yf_info(); //Do it once first
   setInterval(update_yf_info, yfi_fetch_interval);

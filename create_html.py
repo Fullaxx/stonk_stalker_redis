@@ -97,9 +97,9 @@ def gen_html_head(yfi_fetch_interval):
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
 	html += '<script src="static/jquery-3.7.1.min.js"></script>'
 	html += '<script src="static/wall_clock.js"></script>'
-	html += '<script src="static/symbols.js"></script>'
+	html += '<script src="static/yf_info.js"></script>'
 	html += '<script>$(document).ready(function(){ time_init(); });</script>'
-	html += '<script>$(document).ready(function(){ symbol_init(' + yfi_fetch_interval + '); });</script>'
+	html += '<script>$(document).ready(function(){ yf_info_init(' + yfi_fetch_interval + '); });</script>'
 	html += '</head>'
 	return html
 
