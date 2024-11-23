@@ -88,17 +88,18 @@ def gen_html_table(tbl):
 	html += '</br>'
 	return html
 
-def gen_html_head(json_update_interval):
+def gen_html_head(yfi_fetch_interval):
 	html = '<head>'
 	html += '<title>Stonk Stalker</title>'
 	if os.getenv('DARKMODE'):
 		html += '<link rel="stylesheet" href="static/dashboard-dark.css">'
 	else:
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
-	html += '<script src="static/jquery-3.7.0.min.js"></script>'
+	html += '<script src="static/jquery-3.7.1.min.js"></script>'
+	html += '<script src="static/wall_clock.js"></script>'
 	html += '<script src="static/symbols.js"></script>'
 	html += '<script>$(document).ready(function(){ time_init(); });</script>'
-	html += '<script>$(document).ready(function(){ symbol_init(' + json_update_interval + '); });</script>'
+	html += '<script>$(document).ready(function(){ symbol_init(' + yfi_fetch_interval + '); });</script>'
 	html += '</head>'
 	return html
 
@@ -109,15 +110,15 @@ def gen_html_body():
 	html += '<h3><div id="time"></div></h3>'
 	for tbl in tables_list:
 		html += gen_html_table(tbl)
-	html += '<a href="https://github.com/Fullaxx/stonk_stalker">Source Code on GitHub</a>'
+	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
 	html += '</center>'
 	html += '</body>'
 	return html
 
-def gen_index_html(tables_list, json_update_interval):
+def gen_index_html(tables_list, yfi_fetch_interval):
 	html = '<!DOCTYPE html>'
 	html += '<html lang="en">'
-	html += gen_html_head(json_update_interval)
+	html += gen_html_head(yfi_fetch_interval)
 	html += gen_html_body()
 	html += '</html>'
 	write_to_file(html, 'index.html')
@@ -129,8 +130,8 @@ if __name__ == '__main__':
 	ticker_tables = os.getenv('TICKER_TABLES')
 	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
 
-	json_update_interval = os.getenv('FETCH_INTERVAL')
-	if json_update_interval is None: json_update_interval = '2000'
+	yfi_fetch_interval = os.getenv('YFI_FETCH_INTERVAL')
+	if yfi_fetch_interval is None: yfi_fetch_interval = '59000'
 
 	sleep_time = 30
 	if os.getenv('SLEEP_TIME') is not None:
@@ -142,5 +143,5 @@ if __name__ == '__main__':
 		symbols = tbl.split('=')[1]
 		symb_list += symbols.split(',')
 
-	gen_index_html(tables_list, json_update_interval)
+	gen_index_html(tables_list, yfi_fetch_interval)
 	time.sleep(2)

@@ -52,7 +52,7 @@ if __name__ == '__main__':
 		marketdb[symbol] = info
 
 	market_str = json.dumps(marketdb)
-	filename = f'market.json'
+	filename = f'yf_info.json'
 	print(f'Writing {filename} ...')
 	write_to_file(market_str, filename)
 	time.sleep(59)

@@ -1,8 +1,3 @@
-/*
-TimeZone: https://stackoverflow.com/questions/15141762/how-to-initialize-a-javascript-date-to-a-particular-time-zone
-TimeZone: https://stackoverflow.com/questions/10087819/convert-date-to-another-timezone-in-javascript
-rounding info: https://stackoverflow.com/questions/15762768/javascript-math-round-to-two-decimal-places
-*/
 
 function remove_all_color(e)
 {
@@ -113,9 +108,9 @@ function cell_update(symb, info, datatag)
   td.innerHTML = data.toFixed(2);
 }
 
-function update_symbols()
+function update_yf_info()
 {
-  $.getJSON( "market.json", function(data) {
+  $.getJSON( "yf_info.json", function(data) {
     for (let key in data) {
       //console.log(key, data[key]);
       header_update(key, data[key]);
@@ -130,21 +125,8 @@ function update_symbols()
   });
 }
 
-function symbol_init(json_update_interval)
+function symbol_init(yfi_fetch_interval)
 {
-  setInterval(update_symbols, json_update_interval);
-  //setInterval(function(){ symbol_update(); }, json_update_interval);
-}
-
-function time_update() {
-  now = new Date(new Date().toLocaleString('en', {timeZone: 'America/New_York'}))
-  a = now.toString().split(' ');
-  time_str = a[0] + ' ' + a[1] + ' ' + a[2] + ' ' + a[3] + ' ' + a[4] + ' US/Eastern'
-  //console.log(time_str)
-  $('[id="time"]').html(time_str);
-}
-
-function time_init(symbol_list)
-{
-  setInterval(time_update, 1000);
+  update_yf_info(); //Do it once first
+  setInterval(update_yf_info, yfi_fetch_interval);
 }
