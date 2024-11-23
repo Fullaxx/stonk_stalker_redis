@@ -15,7 +15,7 @@ if __name__ == '__main__':
 	ticker_tables = os.getenv('TICKER_TABLES')
 	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
 
-	ri_str = os.getenv('REQUEST_INTERVAL')
+	ri_str = os.getenv('YF_REQUEST_INTERVAL')
 	request_interval = 30 if ri_str is None else int(ri_str)
 
 	symb_list = []
