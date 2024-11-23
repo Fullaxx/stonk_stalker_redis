@@ -133,10 +133,6 @@ if __name__ == '__main__':
 	yfi_fetch_interval = os.getenv('YFI_FETCH_INTERVAL')
 	if yfi_fetch_interval is None: yfi_fetch_interval = '59000'
 
-	sleep_time = 30
-	if os.getenv('SLEEP_TIME') is not None:
-		sleep_time = int(os.getenv('SLEEP_TIME'))
-
 	symb_list = []
 	tables_list = ticker_tables.split(';')
 	for tbl in tables_list:
@@ -145,3 +141,4 @@ if __name__ == '__main__':
 
 	gen_index_html(tables_list, yfi_fetch_interval)
 	time.sleep(2)
+	// Sleep for a bit so supervisord knows all is well
