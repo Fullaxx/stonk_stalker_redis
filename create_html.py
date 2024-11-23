@@ -4,12 +4,15 @@ import os
 import sys
 import json
 import time
-from pytz import timezone
-from datetime import datetime
 
 def bailmsg(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 	exit(1)
+
+def write_to_file(text, filename):
+	with open(filename, 'w') as f:
+		f.write(text)
+		f.close()
 
 def gen_html_table(tbl):
 	table_name,symbols = tbl.split('=')
@@ -140,4 +143,4 @@ if __name__ == '__main__':
 		symb_list += symbols.split(',')
 
 	gen_index_html(tables_list, json_update_interval)
-	sys.exit(0)
+	time.sleep(2)
