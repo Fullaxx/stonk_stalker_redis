@@ -131,7 +131,7 @@ if __name__ == '__main__':
 	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
 
 	yfi_fetch_interval = os.getenv('YFI_FETCH_INTERVAL')
-	if yfi_fetch_interval is None: yfi_fetch_interval = '59000'
+	if yfi_fetch_interval is None: yfi_fetch_interval = '60000'
 
 	symb_list = []
 	tables_list = ticker_tables.split(';')

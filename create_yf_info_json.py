@@ -55,4 +55,4 @@ if __name__ == '__main__':
 	filename = f'yf_info.json'
 	print(f'Writing {filename} ...')
 	write_to_file(market_str, filename)
-	time.sleep(59)
+	time.sleep(60)
