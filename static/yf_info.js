@@ -110,7 +110,7 @@ function cell_update(symb, info, datatag)
 
 function update_yf_info()
 {
-  $.getJSON( "yf_info.json", function(data) {
+  $.getJSON( "market_data/yf_info.json", function(data) {
     for (let key in data) {
       //console.log(key, data[key]);
       header_update(key, data[key]);

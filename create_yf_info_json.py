@@ -7,6 +7,8 @@ import json
 import time
 import redis
 
+from contextlib import suppress
+
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
@@ -30,6 +32,8 @@ def acquire_environment():
 
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
+	with suppress(FileExistsError): os.mkdir('market_data')
+	os.chdir('market_data')
 
 	if os.getenv('REDIS_URL') is None: bailmsg('Set REDIS_URL')
 
