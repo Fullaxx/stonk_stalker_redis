@@ -6,7 +6,9 @@ import sys
 import json
 import time
 import redis
+import signal
 
+from datetime import datetime
 from contextlib import suppress
 
 sys.path.append('.')
@@ -14,6 +16,10 @@ sys.path.append('/app')
 from redis_helpers import connect_to_redis
 
 g_debug_python = False
+g_shutdown = False
+def signal_handler(sig, frame):
+	global g_shutdown
+	g_shutdown = True
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -26,6 +32,22 @@ def write_to_file(text, filename):
 	with open(filename, 'w') as f:
 		f.write(text)
 		f.close()
+
+def prepare_marketdb(r):
+	marketdb = {}
+	symb_set = r.smembers('SSCFG:SYMBOLSET')
+	for symbol in symb_set:
+		key = f'YFINANCE:INFO:{symbol}'
+		info_str = r.get(key)
+		info = json.loads(info_str)
+		marketdb[symbol] = info
+	return marketdb
+
+def dump_marketdb(r, now_dt, filename):
+	marketdb = prepare_marketdb(r)
+	market_str = json.dumps(marketdb)
+	print(f'{now_dt} Writing {filename} ...', flush=True)
+	write_to_file(market_str, filename)
 
 def acquire_environment():
 	global g_debug_python
@@ -47,16 +69,17 @@ def acquire_environment():
 if __name__ == '__main__':
 	acquire_environment()
 	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
-	symb_set = r.smembers('SSCFG:SYMBOLSET')
-	marketdb = {}
-	for symbol in symb_set:
-		key = f'YFINANCE:INFO:{symbol}'
-		info_str = r.get(key)
-		info = json.loads(info_str)
-		marketdb[symbol] = info
 
-	market_str = json.dumps(marketdb)
+	signal.signal(signal.SIGINT,  signal_handler)
+	signal.signal(signal.SIGTERM, signal_handler)
+	signal.signal(signal.SIGQUIT, signal_handler)
+
+	next = 0
 	filename = f'yf_info.json'
-	print(f'Writing {filename} ...')
-	write_to_file(market_str, filename)
-	time.sleep(60)
+	while not g_shutdown:
+		now_dt = datetime.utcnow()
+		now_s = int(now_dt.timestamp())
+		if (now_s >= next):
+			dump_marketdb(r, now_dt, filename)
+			next = now_s + 60
+		time.sleep(0.1)
