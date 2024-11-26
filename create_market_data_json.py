@@ -39,20 +39,25 @@ def prepare_marketdb(r):
 	for symbol in symb_set:
 		am_min_bar_str = r.get(f'ALPACA:1MINBARS:{symbol}')
 		yf_info_str = r.get(f'YFINANCE:INFO:{symbol}')
-		if am_min_bar_str is None:
-			eprint(f'GET ALPACA:1MINBARS:{symbol} FAILED!')
-			continue
+
 		if yf_info_str is None:
 			eprint(f'GET YFINANCE:INFO:{symbol} FAILED!')
 			continue
 
-		am_min_bar = json.loads(am_min_bar_str)
 		yf_info = json.loads(yf_info_str)
+		price = yf_info['currentPrice']
+
+		if am_min_bar_str is None:
+			eprint(f'GET ALPACA:1MINBARS:{symbol} FAILED!')
+		else:
+			am_min_bar = json.loads(am_min_bar_str)
+			price = am_min_bar['c']
+
 		if 'pegRatio' not in yf_info: yf_info['pegRatio'] = ''
 		if 'forwardPE' not in yf_info: yf_info['forwardPE'] = ''
 		if 'priceToSalesTrailing12Months' not in yf_info: yf_info['priceToSalesTrailing12Months'] = ''
 		marketdb[symbol] = {
-			'currentPrice':am_min_bar['c'],
+			'currentPrice':price,
 			'pegRatio':yf_info['pegRatio'],
 			'forwardPE':yf_info['forwardPE'],
 			'marketCap':yf_info['marketCap'],
