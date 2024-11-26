@@ -22,6 +22,9 @@ sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
 
+g_rc = None
+g_symbolset = None
+
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
@@ -60,24 +63,37 @@ def handle_market_message_orig(ws, obj):
 		print(f'{key} {symbol} {bar_str}', flush=True)
 
 def handle_market_message_updatedbars(ws, obj):
-#	symbol = obj['S']
-	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
+	symbol = obj['S']
+#	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
+	if (g_rc is None) or (g_symbolset is None): return
+
+	if symbol in g_symbolset:
+		if g_debug_python: print(f'UpdatedBars: {symbol} @ {obj}', flush=True)
+		key = f'ALPACA:1MINBARS:{symbol}'
+		val = json.dumps(obj)
+		g_rc.set(key, val)
 
 def handle_market_message_dailybars(ws, obj):
 	symbol = obj['S']
-	close = obj['c']
-	if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
-	if g_rc is not None:
-		key = f'ALPACA:DAILYBARS:CLOSE:{symbol}'
-		g_rc.set(key, close)
+#	if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
+	if (g_rc is None) or (g_symbolset is None): return
+
+	if symbol in g_symbolset:
+		if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
+		key = f'ALPACA:DAILYBARS:{symbol}'
+		val = json.dumps(obj)
+		g_rc.set(key, val)
 
 def handle_market_message_bars(ws, obj):
 	symbol = obj['S']
-	close = obj['c']
-	if g_debug_python: print(f'AlpacaBars: {symbol} @ {close}', flush=True)
-	if g_rc is not None:
-		key = f'ALPACA:BARS:CLOSE:{symbol}'
-		g_rc.set(key, close)
+#	if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
+	if (g_rc is None) or (g_symbolset is None): return
+
+	if symbol in g_symbolset:
+		if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
+		key = f'ALPACA:1MINBARS:{symbol}'
+		val = json.dumps(obj)
+		g_rc.set(key, val)
 
 def handle_market_message_trade(ws, obj):
 	symbol = obj['S']
@@ -110,10 +126,11 @@ def handle_market_message(ws, obj):
 def create_alpaca_wss_sub_msg():
 	subact = {'action':'subscribe'}
 #	list_of_symbols = args.symbols.split(',')
-	list_of_symbols = ('BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD')
+	if (g_exchange ==  'STOCK'): list_of_symbols = ('AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT')
+	if (g_exchange == 'CRYPTO'): list_of_symbols = ('BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD')
 	json_list_of_symbols = json.dumps(list_of_symbols)
 #	subact['orderbooks']  = list_of_symbols
-	subact['trades']      = list_of_symbols
+#	subact['trades']      = list_of_symbols
 #	subact['quotes']      = list_of_symbols
 	subact['bars']        = list('*')
 	subact['updatedBars'] = list('*')
@@ -168,8 +185,8 @@ def acquire_environment():
 	g_etz = pytz.timezone('US/Eastern')
 
 	redis_url = os.getenv('REDIS_URL')
-#	if redis_url is None: bailmsg('Set REDIS_URL')
-	if redis_url is None: print('REDIS_URL is NULL (Not connecting)', flush=True)
+	if redis_url is None: bailmsg('Set REDIS_URL')
+#	if redis_url is None: print('REDIS_URL is NULL (Not connecting)', flush=True)
 
 	g_apikey = os.getenv('ALPACA_APIKEY')
 	if g_apikey is None: bailmsg('Set ALPACA_APIKEY')
@@ -193,11 +210,11 @@ def acquire_environment():
 	return wssurl,redis_url
 
 if __name__ == '__main__':
-	global g_rc
 	wssurl,redis_url = acquire_environment()
 
 	if redis_url is not None:
 		g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
+		g_symbolset = g_rc.smembers(f'SSCFG:SYMBOLSET')
 
 	wss_dbg_trace = False
 	websocket.enableTrace(wss_dbg_trace)
