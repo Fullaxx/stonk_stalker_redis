@@ -88,7 +88,7 @@ def gen_html_table(tbl):
 	html += '</br>'
 	return html
 
-def gen_html_head(yfi_fetch_interval):
+def gen_html_head(market_data_fetch_interval):
 	html = '<head>'
 	html += '<title>Stonk Stalker</title>'
 	if os.getenv('DARKMODE'):
@@ -97,9 +97,9 @@ def gen_html_head(yfi_fetch_interval):
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
 	html += '<script src="static/jquery-3.7.1.min.js"></script>'
 	html += '<script src="static/wall_clock.js"></script>'
-	html += '<script src="static/yf_info.js"></script>'
+	html += '<script src="static/market_data.js"></script>'
 	html += '<script>$(document).ready(function(){ time_init(); });</script>'
-	html += '<script>$(document).ready(function(){ yf_info_init(' + yfi_fetch_interval + '); });</script>'
+	html += '<script>$(document).ready(function(){ market_data_init(' + market_data_fetch_interval + '); });</script>'
 	html += '</head>'
 	return html
 
@@ -115,10 +115,10 @@ def gen_html_body():
 	html += '</body>'
 	return html
 
-def gen_index_html(tables_list, yfi_fetch_interval):
+def gen_index_html(tables_list, market_data_fetch_interval):
 	html = '<!DOCTYPE html>'
 	html += '<html lang="en">'
-	html += gen_html_head(yfi_fetch_interval)
+	html += gen_html_head(market_data_fetch_interval)
 	html += gen_html_body()
 	html += '</html>'
 	write_to_file(html, 'index.html')
@@ -130,8 +130,8 @@ if __name__ == '__main__':
 	ticker_tables = os.getenv('TICKER_TABLES')
 	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
 
-	yfi_fetch_interval = os.getenv('YFI_FETCH_INTERVAL')
-	if yfi_fetch_interval is None: yfi_fetch_interval = '60000'
+	market_data_fetch_interval = os.getenv('MARKET_DATA_FETCH_INTERVAL')
+	if market_data_fetch_interval is None: market_data_fetch_interval = '4000'
 
 	symb_list = []
 	tables_list = ticker_tables.split(';')
@@ -139,6 +139,6 @@ if __name__ == '__main__':
 		symbols = tbl.split('=')[1]
 		symb_list += symbols.split(',')
 
-	gen_index_html(tables_list, yfi_fetch_interval)
+	gen_index_html(tables_list, market_data_fetch_interval)
 	time.sleep(2)
 #	Sleep for a bit so supervisord knows all is well

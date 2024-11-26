@@ -108,9 +108,9 @@ function cell_update(symb, info, datatag)
   td.innerHTML = data.toFixed(2);
 }
 
-function update_yf_info()
+function update_market_data()
 {
-  $.getJSON( "market_data/yf_info.json", function(data) {
+  $.getJSON( "market_data/market.json", function(data) {
     for (let key in data) {
       //console.log(key, data[key]);
       header_update(key, data[key]);
@@ -125,8 +125,8 @@ function update_yf_info()
   });
 }
 
-function yf_info_init(yfi_fetch_interval)
+function market_data_init(market_data_fetch_interval)
 {
-  update_yf_info(); //Do it once first
-  setInterval(update_yf_info, yfi_fetch_interval);
+  update_market_data(); //Do it once first
+  setInterval(update_market_data, market_data_fetch_interval);
 }
