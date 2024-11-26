@@ -97,8 +97,8 @@ function cell_update(symb, info, datatag)
     if(typeof(info.bookValue) == "number") {
       data = info.currentPrice / info.bookValue;
     }
-  } else if(datatag == 'pegRatio') {
-    data = info.pegRatio;
+  } else if(datatag == 'trailingPegRatio') {
+    data = info.trailingPegRatio;
   } else if(datatag == 'priceToSalesTrailing12Months') {
     data = info.priceToSalesTrailing12Months;
   } else if(datatag == 'forwardPE') {
@@ -120,12 +120,12 @@ function update_market_data()
       header_update(key, data[key]);
       move_update(key, data[key]);
       mcap_update(key, data[key]);
+      cell_update(key, data[key], 'pbRatio')
+      cell_update(key, data[key], 'forwardPE')
       cell_update(key, data[key], 'currentPrice')
       cell_update(key, data[key], 'previousClose')
-      cell_update(key, data[key], 'forwardPE')
+      cell_update(key, data[key], 'trailingPegRatio')
       cell_update(key, data[key], 'priceToSalesTrailing12Months')
-      cell_update(key, data[key], 'pegRatio')
-      cell_update(key, data[key], 'pbRatio')
     }
   });
 }

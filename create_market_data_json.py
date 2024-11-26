@@ -54,16 +54,16 @@ def prepare_marketdb(r):
 			price = am_min_bar['c']
 
 		if 'bookValue' not in yf_info: yf_info['bookValue'] = ''
-		if 'pegRatio' not in yf_info: yf_info['pegRatio'] = ''
 		if 'forwardPE' not in yf_info: yf_info['forwardPE'] = ''
+		if 'trailingPegRatio' not in yf_info: yf_info['trailingPegRatio'] = ''
 		if 'priceToSalesTrailing12Months' not in yf_info: yf_info['priceToSalesTrailing12Months'] = ''
 		marketdb[symbol] = {
 			'currentPrice':price,
-			'pegRatio':yf_info['pegRatio'],
 			'bookValue':yf_info['bookValue'],
 			'forwardPE':yf_info['forwardPE'],
 			'marketCap':yf_info['marketCap'],
 			'previousClose':yf_info['previousClose'],
+			'trailingPegRatio':yf_info['trailingPegRatio'],
 			'priceToSalesTrailing12Months':yf_info['priceToSalesTrailing12Months']
 		}
 	return marketdb

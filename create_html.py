@@ -73,7 +73,7 @@ def gen_html_table(tbl):
 		html += '<tr>'
 		html += '<td>PEG</td>'
 		for symb in symb_list:
-			html += f'<td id={symb}_pegRatio></td>'
+			html += f'<td id={symb}_trailingPegRatio></td>'
 		html += '</tr>'
 
 	pb_toggle = os.getenv('DISPLAY_PB_RATIO')
