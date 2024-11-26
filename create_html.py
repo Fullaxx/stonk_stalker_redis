@@ -76,6 +76,14 @@ def gen_html_table(tbl):
 			html += f'<td id={symb}_pegRatio></td>'
 		html += '</tr>'
 
+	pb_toggle = os.getenv('DISPLAY_PB_RATIO')
+	if (pb_toggle is not None) and (pb_toggle == '1'):
+		html += '<tr>'
+		html += '<td>PB</td>'
+		for symb in symb_list:
+			html += f'<td id={symb}_pbRatio></td>'
+		html += '</tr>'
+
 	urls_toggle = os.getenv('OTHER_URLS')
 	if (urls_toggle is not None) and (urls_toggle == '1'):
 		html += '<tr>'

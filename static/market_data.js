@@ -93,7 +93,11 @@ function cell_update(symb, info, datatag)
 {
   td = document.getElementById(symb + '_' + datatag);
   if(!td) { return; }
-  if(datatag == 'pegRatio') {
+  if(datatag == 'pbRatio') {
+    if(typeof(info.bookValue) == "number") {
+      data = info.currentPrice / info.bookValue;
+    }
+  } else if(datatag == 'pegRatio') {
     data = info.pegRatio;
   } else if(datatag == 'priceToSalesTrailing12Months') {
     data = info.priceToSalesTrailing12Months;
@@ -121,6 +125,7 @@ function update_market_data()
       cell_update(key, data[key], 'forwardPE')
       cell_update(key, data[key], 'priceToSalesTrailing12Months')
       cell_update(key, data[key], 'pegRatio')
+      cell_update(key, data[key], 'pbRatio')
     }
   });
 }
