@@ -1,8 +1,19 @@
 #!/usr/bin/env python3
+# pip3 install redis,yfinance
 
 import os
 import sys
-import time
+import json
+import redis
+
+import yfinance as yf
+from argparse import ArgumentParser
+
+sys.path.append('.')
+sys.path.append('/app')
+from redis_helpers import connect_to_redis
+
+g_debug_python = False
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -11,21 +22,47 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
+def save_symbol(r, symbol):
+	key = f'SSCFG:SYMBOLSET'
+	num_updated = r.sadd(key, symbol)
+#	print(f'{key} {symbol:>9}: {num_updated}')
+
+def save_info(r, symbol, info):
+	cp = info['currentPrice']
+	info_str = json.dumps(info)
+	key = f'YFINANCE:INFO:{symbol}'
+	result = r.set(key, info_str)
+	if result:
+		print(f'SET {key:<20} ${cp}')
+	else:
+		print(f'SET {key:<20} FAILED!')
+
+def delete_if_exists(stock_d, key):
+	if key in stock_d:
+		del stock_d[key]
+
+def acquire_environment():
+	global g_debug_python
+
+	if os.getenv('REDIS_URL') is None: bailmsg('Set REDIS_URL')
+
+	debug_env_var = os.getenv('DEBUG_PYTHON')
+	if debug_env_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (debug_env_var.startswith(flags)): g_debug_python = True
+		if (debug_env_var == 'on'): g_debug_python = True
+		if (debug_env_var == 'ON'): g_debug_python = True
+
 if __name__ == '__main__':
-	ticker_tables = os.getenv('TICKER_TABLES')
-	if ticker_tables is None: bailmsg('Set TICKER_TABLES')
+	parser = ArgumentParser()
+	parser.add_argument('--symbol', '-s', type=str, required=True)
+	args = parser.parse_args()
 
-	ri_str = os.getenv('YF_REQUEST_INTERVAL')
-	request_interval = 30 if ri_str is None else int(ri_str)
+	acquire_environment()
+	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
+	res = yf.Ticker(args.symbol)
 
-	symb_list = []
-	tables_list = ticker_tables.split(';')
-	for tbl in tables_list:
-		symbols = tbl.split('=')[1]
-		symb_list += symbols.split(',')
-
-#	When this loop is done, it will exit 0
-#	Current Design: supervisord will restart it automatically
-	for symb in symb_list:
-		os.system(f'/app/yf_info2redis.py -s {symb}')
-		time.sleep(request_interval)
+	delete_if_exists(res.info, 'companyOfficers')
+	delete_if_exists(res.info, 'longBusinessSummary')
+	save_info(r, args.symbol, res.info)
+	save_symbol(r, args.symbol)
