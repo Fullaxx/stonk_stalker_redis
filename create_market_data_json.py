@@ -40,10 +40,10 @@ def prepare_marketdb(r):
 		am_min_bar_str = r.get(f'ALPACA:1MINBARS:{symbol}')
 		yf_info_str = r.get(f'YFINANCE:INFO:{symbol}')
 		if am_min_bar_str is None:
-			eprint(f'am_min_bar_str is None!')
+			eprint(f'GET ALPACA:1MINBARS:{symbol} FAILED!')
 			return None
 		if yf_info_str is None:
-			eprint(f'yf_info_str is None!')
+			eprint(f'GET YFINANCE:INFO:{symbol} FAILED!')
 			return None
 		am_min_bar = json.loads(am_min_bar_str)
 		yf_info = json.loads(yf_info_str)
