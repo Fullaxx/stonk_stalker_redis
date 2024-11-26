@@ -64,8 +64,12 @@ def handle_market_message_updatedbars(ws, obj):
 	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
 
 def handle_market_message_dailybars(ws, obj):
-#	symbol = obj['S']
+	symbol = obj['S']
+	close = obj['c']
 	if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
+	if g_rc is not None:
+		key = f'ALPACA:DAILYBARS:CLOSE:{symbol}'
+		g_rc.set(key, close)
 
 def handle_market_message_bars(ws, obj):
 	symbol = obj['S']
@@ -110,10 +114,10 @@ def create_alpaca_wss_sub_msg():
 	json_list_of_symbols = json.dumps(list_of_symbols)
 #	subact['orderbooks']  = list_of_symbols
 	subact['trades']      = list_of_symbols
-	subact['quotes']      = list_of_symbols
+#	subact['quotes']      = list_of_symbols
 	subact['bars']        = list('*')
 	subact['updatedBars'] = list('*')
-#	subact['dailyBars']   = list('*')
+	subact['dailyBars']   = list('*')
 	sub_str = json.dumps(subact)
 	return sub_str
 
