@@ -37,15 +37,16 @@ def prepare_marketdb(r):
 	marketdb = {}
 	symb_set = r.smembers('SSCFG:SYMBOLSET')
 	for symbol in symb_set:
-		key = f'ALPACA:1MINBARS:{symbol}'
-		am_min_bar_str = r.get(key)
+		am_min_bar_str = r.get(f'ALPACA:1MINBARS:{symbol}')
+		yf_info_str = r.get(f'YFINANCE:INFO:{symbol}')
+		if am_min_bar_str is None:
+			eprint(f'am_min_bar_str is None!')
+			return
+		if yf_info_str is None:
+			eprint(f'yf_info_str is None!')
+			return
 		am_min_bar = json.loads(am_min_bar_str)
-		key = f'YFINANCE:INFO:{symbol}'
-		yf_info_str = r.get(key)
 		yf_info = json.loads(yf_info_str)
-#		key = f'ALPACA:DAILYBARS:{symbol}'
-#		dbar_str = r.get(key)
-#		dbar = json.loads(dbar_str)
 		if 'pegRatio' not in yf_info: yf_info['pegRatio'] = ''
 		marketdb[symbol] = {
 			'currentPrice':am_min_bar['c'],
