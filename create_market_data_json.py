@@ -97,6 +97,5 @@ if __name__ == '__main__':
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			dump_marketdb(r, now_dt, filename)
-			sys.exit(0) # XXX DELETEME XXX
 			next = now_s + 15
 		time.sleep(0.1)
