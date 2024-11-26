@@ -41,10 +41,10 @@ def prepare_marketdb(r):
 		yf_info_str = r.get(f'YFINANCE:INFO:{symbol}')
 		if am_min_bar_str is None:
 			eprint(f'am_min_bar_str is None!')
-			return
+			return None
 		if yf_info_str is None:
 			eprint(f'yf_info_str is None!')
-			return
+			return None
 		am_min_bar = json.loads(am_min_bar_str)
 		yf_info = json.loads(yf_info_str)
 		if 'pegRatio' not in yf_info: yf_info['pegRatio'] = ''
@@ -60,9 +60,10 @@ def prepare_marketdb(r):
 
 def dump_marketdb(r, now_dt, filename):
 	marketdb = prepare_marketdb(r)
-	market_str = json.dumps(marketdb)
-	print(f'{now_dt} Writing {filename} ...', flush=True)
-	write_to_file(market_str, filename)
+	if marketdb is not None:
+		market_str = json.dumps(marketdb)
+		print(f'{now_dt} Writing {filename} ...', flush=True)
+		write_to_file(market_str, filename)
 
 def acquire_environment():
 	global g_debug_python
