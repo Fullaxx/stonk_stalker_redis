@@ -1,5 +1,22 @@
-pandas
+# Official Alpaca API
+# alpaca-py
+
+# Pandas 2.2.0 has a memory leak
+pandas==2.1.4
+
+# Technical Analysis library for generating signals/indicators
 pandas_ta
+
+# Python bindings for ZMQ
 pyzmq
+
+# Python bindings for Redis
 redis[hiredis]
+
+# Websocket library (Should look into alpacas Stream class)
+rel
+websocket-client
+wsaccel
+
+# library for pulling Yahoo Finance market data
 yfinance
