@@ -27,5 +27,5 @@ if __name__ == '__main__':
 #	When this loop is done, it will exit 0
 #	Current Design: supervisord will restart it automatically
 	for symb in symb_list:
-		os.system(f'/app/yfTickerInfo2Redis.py -s {symb}')
+		os.system(f'/app/yf_info2redis.py -s {symb}')
 		time.sleep(request_interval)
