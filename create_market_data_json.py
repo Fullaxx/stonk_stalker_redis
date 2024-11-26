@@ -49,6 +49,7 @@ def prepare_marketdb(r):
 		am_min_bar = json.loads(am_min_bar_str)
 		yf_info = json.loads(yf_info_str)
 		if 'pegRatio' not in yf_info: yf_info['pegRatio'] = ''
+		if 'forwardPE' not in yf_info: yf_info['forwardPE'] = ''
 		if 'priceToSalesTrailing12Months' not in yf_info: yf_info['priceToSalesTrailing12Months'] = ''
 		marketdb[symbol] = {
 			'currentPrice':am_min_bar['c'],
