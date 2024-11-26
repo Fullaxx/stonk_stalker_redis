@@ -71,7 +71,7 @@ def gen_html_table(tbl):
 	peg_toggle = os.getenv('DISPLAY_PEG_RATIO')
 	if (peg_toggle is not None) and (peg_toggle == '1'):
 		html += '<tr>'
-		html += '<td>PEG</td>'
+		html += '<td>tPEG</td>'
 		for symb in symb_list:
 			html += f'<td id={symb}_trailingPegRatio></td>'
 		html += '</tr>'
