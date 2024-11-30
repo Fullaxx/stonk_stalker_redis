@@ -23,7 +23,8 @@ ENV TZ=US/Eastern
 COPY requirements.txt /install/
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	  libmicrohttpd12 libhiredis0.14 lsof nano supervisor tree python3-pip vim-tiny && \
+	  curl lsof nano tree vim-tiny \
+	  libmicrohttpd12 libhiredis0.14 supervisor python3-pip && \
 	pip3 install --break-system-packages -r /install/requirements.txt && \
 	apt-get clean && \
 	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
