@@ -2,9 +2,11 @@
 
 import os
 import sys
-import json
 import time
-from pathlib import Path
+
+sys.path.append('.')
+sys.path.append('/app')
+from ss_cfg import read_ss_config
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -136,20 +138,6 @@ def gen_index_html(cfg, market_data_fetch_interval):
 	html += '</html>'
 	write_to_file(html, 'index.html')
 
-def read_tables_config():
-	cfg_dir = Path('/config')
-	if not cfg_dir.is_dir():
-		bailmsg(f'/config is not a directory!')
-	cfg_file = Path('/config/tables.json')
-	if not cfg_file.is_file():
-		bailmsg(f'/config/tables.json is not a file!')
-
-	with open('/config/tables.json', 'r') as f:
-		config_str = f.read()
-		config = json.loads(config_str)
-
-	return config
-
 if __name__ == '__main__':
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
@@ -157,7 +145,7 @@ if __name__ == '__main__':
 	market_data_fetch_interval = os.getenv('MARKET_DATA_FETCH_INTERVAL')
 	if market_data_fetch_interval is None: market_data_fetch_interval = '4000'
 
-	tables_config = read_tables_config()
-	gen_index_html(tables_config, market_data_fetch_interval)
+	ss_config = read_ss_config()
+	gen_index_html(ss_config, market_data_fetch_interval)
 	time.sleep(2)
 #	Sleep for a bit so supervisord knows all is well

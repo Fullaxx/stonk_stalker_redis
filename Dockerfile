@@ -35,7 +35,7 @@ RUN apt-get update && \
 # Prepare the image
 COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY *.py /app/
+COPY *.py shared/*.py /app/
 COPY static/* /www/static/
 COPY --from=build /dark/darkhttpd.exe /app/
 
