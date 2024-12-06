@@ -20,7 +20,7 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def gen_html_table(k, v):
+def gen_html_table(k, v, dc):
 	table_name = v['table_name']
 	symbols_str = v['symbols']
 	symbols_list = symbols_str.split(',')
@@ -51,48 +51,42 @@ def gen_html_table(k, v):
 		html += f'<td id={symb}_previousClose></td>'
 	html += '</tr>'
 
-	mc_toggle = os.getenv('DISPLAY_MARKET_CAP')
-	if (mc_toggle is not None) and (mc_toggle == '1'):
+	if dc['DISPLAY_MARKET_CAP']:
 		html += '<tr>'
 		html += '<td>MCap</td>'
 		for symb in symbols_list:
 			html += f'<td id={symb}_mcap></td>'
 		html += '</tr>'
 
-	fpe_toggle = os.getenv('DISPLAY_FPE_RATIO')
-	if (fpe_toggle is not None) and (fpe_toggle == '1'):
+	if dc['DISPLAY_FPE_RATIO']:
 		html += '<tr>'
 		html += '<td>FPE</td>'
 		for symb in symbols_list:
 			html += f'<td id={symb}_forwardPE></td>'
 		html += '</tr>'
 
-	pst12_toggle = os.getenv('DISPLAY_PST12_RATIO')
-	if (pst12_toggle is not None) and (pst12_toggle == '1'):
+	if dc['DISPLAY_PST12_RATIO']:
 		html += '<tr>'
 		html += '<td>PST12</td>'
 		for symb in symbols_list:
 			html += f'<td id={symb}_priceToSalesTrailing12Months></td>'
 		html += '</tr>'
 
-	peg_toggle = os.getenv('DISPLAY_PEG_RATIO')
-	if (peg_toggle is not None) and (peg_toggle == '1'):
+	if dc['DISPLAY_PEG_RATIO']:
 		html += '<tr>'
 		html += '<td>tPEG</td>'
 		for symb in symbols_list:
 			html += f'<td id={symb}_trailingPegRatio></td>'
 		html += '</tr>'
 
-	pb_toggle = os.getenv('DISPLAY_PB_RATIO')
-	if (pb_toggle is not None) and (pb_toggle == '1'):
+	if dc['DISPLAY_PB_RATIO']:
 		html += '<tr>'
 		html += '<td>PB</td>'
 		for symb in symbols_list:
 			html += f'<td id={symb}_pbRatio></td>'
 		html += '</tr>'
 
-	urls_toggle = os.getenv('OTHER_URLS')
-	if (urls_toggle is not None) and (urls_toggle == '1'):
+	if dc['DISPLAY_OTHER_URLS']:
 		html += '<tr>'
 		html += '<td>URLS</td>'
 		for symb in symbols_list:
@@ -123,8 +117,11 @@ def gen_html_body(cfg):
 	html += '<center>'
 	html += '<h2>Stonk Stalker</h2>'
 	html += '<h3><div id="time"></div></h3>'
+
+	display_config = cfg['DISPLAY_CONFIG']
 	for k,v in cfg.items():
-		html += gen_html_table(k,v)
+		if k.startswith('TABLE_'):
+			html += gen_html_table(k,v,display_config)
 	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
 	html += '</center>'
 	html += '</body>'
