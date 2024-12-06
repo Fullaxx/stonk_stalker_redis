@@ -96,7 +96,7 @@ def gen_html_table(k, v):
 		html += '<tr>'
 		html += '<td>URLS</td>'
 		for symb in symbols_list:
-			html += f'<td><a href=https://finance.yahoo.com/quote/{symb}>YF</a>/<a href=https://gurufocus.com/stock/{symb}>GF</a></td>'
+			html += f'<td><a href=https://finance.yahoo.com/quote/{symb}>YF</a><a href=https://gurufocus.com/stock/{symb}>GF</a></td>'
 		html += '</tr>'
 
 	html += '</table>'
