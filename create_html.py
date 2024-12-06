@@ -5,9 +5,12 @@ import sys
 import json
 import time
 
-def bailmsg(*args, **kwargs):
+def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
-	exit(1)
+
+def bailmsg(*args, **kwargs):
+	eprint(*args, **kwargs)
+	sys.exit(1)
 
 def write_to_file(text, filename):
 	with open(filename, 'w') as f:
