@@ -22,6 +22,12 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
+def publish_message(r, symbol, key):
+#	Publish a message indicating an update to specified symbol
+	channel = f'SOURCE:YFINANCE:UPDATED'
+	message = f'{key}'
+	r.publish(channel, message)
+
 def save_info(r, symbol, info):
 	cp = info['currentPrice']
 	info_str = json.dumps(info)
@@ -29,6 +35,7 @@ def save_info(r, symbol, info):
 	result = r.set(key, info_str)
 	if result:
 		print(f'SET {key:<20} ${cp}')
+		publish_message(r, symbol, key)
 	else:
 		print(f'SET {key:<20} FAILED!')
 

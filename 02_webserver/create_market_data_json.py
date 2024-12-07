@@ -33,39 +33,40 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
+def prepare_symbol(r, symbol):
+#	What happenes if we default these to NULL?
+	symb_dict = {
+		'currentPrice':'',
+		'bookValue':'',
+		'forwardPE':'',
+		'marketCap':'',
+		'previousClose':'',
+		'trailingPegRatio':'',
+		'priceToSalesTrailing12Months':''
+	}
+
+	currentPrice = r.get(f'SS:LIVE:CURRENTPRICE:{symbol}')
+	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
+	previousClose = r.get(f'SS:LIVE:PREVIOUSCLOSE:{symbol}')
+	if previousClose is not None: symb_dict['previousClose'] = float(previousClose)
+	bookValue = r.get(f'SS:LIVE:BOOKVALUE:{symbol}')
+	if bookValue is not None: symb_dict['bookValue'] = float(bookValue)
+	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
+	if forwardPE is not None: symb_dict['forwardPE'] = float(forwardPE)
+	marketCap = r.get(f'SS:LIVE:MARKETCAP:{symbol}')
+	if marketCap is not None: symb_dict['marketCap'] = float(marketCap)
+	trailingPegRatio = r.get(f'SS:LIVE:TRAILINGPEGRATIO:{symbol}')
+	if trailingPegRatio is not None: symb_dict['trailingPegRatio'] = float(trailingPegRatio)
+	priceToSalesTrailing12Months = r.get(f'SS:LIVE:PRICETOSALESTRAILING12MONTHS:{symbol}')
+	if priceToSalesTrailing12Months is not None: symb_dict['priceToSalesTrailing12Months'] = float(priceToSalesTrailing12Months)
+
+	return symb_dict
+
 def prepare_marketdb(r):
 	marketdb = {}
 	symb_set = r.smembers('SSCFG:SYMBOLSET')
 	for symbol in symb_set:
-		am_min_bar_str = r.get(f'ALPACA:1MINBARS:{symbol}')
-		yf_info_str = r.get(f'YFINANCE:INFO:{symbol}')
-
-		if yf_info_str is None:
-			eprint(f'GET YFINANCE:INFO:{symbol} FAILED!')
-			continue
-
-		yf_info = json.loads(yf_info_str)
-		price = yf_info['currentPrice']
-
-		if am_min_bar_str is None:
-			eprint(f'GET ALPACA:1MINBARS:{symbol} FAILED!')
-		else:
-			am_min_bar = json.loads(am_min_bar_str)
-			price = am_min_bar['c']
-
-		if 'bookValue' not in yf_info: yf_info['bookValue'] = ''
-		if 'forwardPE' not in yf_info: yf_info['forwardPE'] = ''
-		if 'trailingPegRatio' not in yf_info: yf_info['trailingPegRatio'] = ''
-		if 'priceToSalesTrailing12Months' not in yf_info: yf_info['priceToSalesTrailing12Months'] = ''
-		marketdb[symbol] = {
-			'currentPrice':price,
-			'bookValue':yf_info['bookValue'],
-			'forwardPE':yf_info['forwardPE'],
-			'marketCap':yf_info['marketCap'],
-			'previousClose':yf_info['previousClose'],
-			'trailingPegRatio':yf_info['trailingPegRatio'],
-			'priceToSalesTrailing12Months':yf_info['priceToSalesTrailing12Months']
-		}
+		marketdb[symbol] = prepare_symbol(r, symbol)
 	return marketdb
 
 def dump_marketdb(r, now_dt, filename):

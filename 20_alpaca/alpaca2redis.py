@@ -62,38 +62,47 @@ def handle_market_message_orig(ws, obj):
 	if g_debug_python:
 		print(f'{key} {symbol} {bar_str}', flush=True)
 
-def handle_market_message_updatedbars(ws, obj):
-	symbol = obj['S']
-#	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
-	if (g_rc is None) or (g_symbolset is None): return
-
-	if symbol in g_symbolset:
-		if g_debug_python: print(f'UpdatedBars: {symbol} @ {obj}', flush=True)
-		key = f'ALPACA:1MINBARS:{symbol}'
-		val = json.dumps(obj)
-		g_rc.set(key, val)
+def publish_message(symbol, key):
+#	Publish a message indicating an update to specified symbol
+	channel = f'SOURCE:ALPACA:UPDATED'
+	message = f'{key}'
+	g_rc.publish(channel, message)
 
 def handle_market_message_dailybars(ws, obj):
 	symbol = obj['S']
 #	if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
 	if (g_rc is None) or (g_symbolset is None): return
 
-	if symbol in g_symbolset:
+	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
 		if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
 		key = f'ALPACA:DAILYBARS:{symbol}'
 		val = json.dumps(obj)
 		g_rc.set(key, val)
+		publish_message(symbol, key)
+
+def handle_market_message_updatedbars(ws, obj):
+	symbol = obj['S']
+#	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
+	if (g_rc is None) or (g_symbolset is None): return
+
+	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
+		if g_debug_python: print(f'UpdatedBars: {symbol} @ {obj}', flush=True)
+		key = f'ALPACA:1MINBARS:{symbol}'
+		val = json.dumps(obj)
+		g_rc.set(key, val)
+		publish_message(symbol, key)
 
 def handle_market_message_bars(ws, obj):
 	symbol = obj['S']
 #	if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
 	if (g_rc is None) or (g_symbolset is None): return
 
-	if symbol in g_symbolset:
+	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
 		if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
 		key = f'ALPACA:1MINBARS:{symbol}'
 		val = json.dumps(obj)
 		g_rc.set(key, val)
+		publish_message(symbol, key)
 
 def handle_market_message_trade(ws, obj):
 	symbol = obj['S']
@@ -126,9 +135,9 @@ def handle_market_message(ws, obj):
 def create_alpaca_wss_sub_msg():
 	subact = {'action':'subscribe'}
 #	list_of_symbols = args.symbols.split(',')
-	if (g_exchange ==  'STOCK'): list_of_symbols = ('AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT')
-	if (g_exchange == 'CRYPTO'): list_of_symbols = ('BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD')
-	json_list_of_symbols = json.dumps(list_of_symbols)
+#	if (g_exchange ==  'STOCK'): list_of_symbols = ('AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT')
+#	if (g_exchange == 'CRYPTO'): list_of_symbols = ('BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD')
+#	json_list_of_symbols = json.dumps(list_of_symbols)
 #	subact['orderbooks']  = list_of_symbols
 #	subact['trades']      = list_of_symbols
 #	subact['quotes']      = list_of_symbols
