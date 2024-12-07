@@ -49,7 +49,7 @@ if __name__ == '__main__':
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
 		if k.startswith('TABLE_'):
-			save_symbols(r, v['symbols'])
+			save_symbols(r, v['SYMBOLS'])
 
 	time.sleep(2)
 #	Sleep for a bit so supervisord knows all is well

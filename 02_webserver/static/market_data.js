@@ -23,8 +23,9 @@ function remove_all_color(e)
   e.classList.remove('neg_eight');
 }
 
-function header_update(symb, info)
+function header_update(info)
 {
+  symb = info.symbol
   th = document.getElementById(symb + "_th");
   remove_all_color(th);
   if(info.currentPrice > info.previousClose) {
@@ -56,8 +57,9 @@ function update_move_color(e, pct)
   else if(pct  <  0) { e.classList.add('neg_small'); }
 }
 
-function move_update(symb, info)
+function move_update(info)
 {
+  symb = info.symbol
   td = document.getElementById(symb + "_move");
   remove_all_color(td);
   move = (info.currentPrice - info.previousClose) / info.previousClose;
@@ -71,8 +73,9 @@ function move_update(symb, info)
   td.innerHTML = move_str;
 }
 
-function mcap_update(symb, info)
+function mcap_update(info)
 {
+  symb = info.symbol
   td = document.getElementById(symb + "_mcap");
   if(!td) { return; }
   mcap = info.marketCap;
@@ -89,8 +92,9 @@ function mcap_update(symb, info)
   td.innerHTML = value.toFixed(1) + units;
 }
 
-function cell_update(symb, info, datatag)
+function cell_update(info, datatag)
 {
+  symb = info.symbol
   td = document.getElementById(symb + '_' + datatag);
   if(!td) { return; }
 
@@ -121,17 +125,18 @@ function cell_update(symb, info, datatag)
 function update_market_data()
 {
   $.getJSON( "market_data/market.json", function(data) {
+    //console.log(data)
     for (let key in data) {
       //console.log(key, data[key]);
-      header_update(key, data[key]);
-      move_update(key, data[key]);
-      mcap_update(key, data[key]);
-      cell_update(key, data[key], 'pbRatio')
-      cell_update(key, data[key], 'forwardPE')
-      cell_update(key, data[key], 'currentPrice')
-      cell_update(key, data[key], 'previousClose')
-      cell_update(key, data[key], 'trailingPegRatio')
-      cell_update(key, data[key], 'priceToSalesTrailing12Months')
+      header_update(data[key]);
+      move_update(data[key]);
+      mcap_update(data[key]);
+      cell_update(data[key], 'pbRatio')
+      cell_update(data[key], 'forwardPE')
+      cell_update(data[key], 'currentPrice')
+      cell_update(data[key], 'previousClose')
+      cell_update(data[key], 'trailingPegRatio')
+      cell_update(data[key], 'priceToSalesTrailing12Months')
     }
   });
 }

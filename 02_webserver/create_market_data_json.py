@@ -34,8 +34,10 @@ def write_to_file(text, filename):
 		f.close()
 
 def prepare_symbol(r, symbol):
+	fsymb = symbol.replace('/','-')
 #	What happenes if we default these to NULL?
 	symb_dict = {
+		'symbol':fsymb,
 		'currentPrice':'',
 		'bookValue':'',
 		'forwardPE':'',

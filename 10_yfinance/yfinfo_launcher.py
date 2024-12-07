@@ -23,7 +23,7 @@ if __name__ == '__main__':
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
 		if k.startswith('TABLE_'):
-			symbols_str = v['symbols']
+			symbols_str = v['SYMBOLS']
 			symbols_list += symbols_str.split(',')
 
 #	When this loop is done, it will exit 0
