@@ -93,6 +93,10 @@ function cell_update(symb, info, datatag)
 {
   td = document.getElementById(symb + '_' + datatag);
   if(!td) { return; }
+
+  // Default value
+  data = ''
+
   if(datatag == 'pbRatio') {
     if(typeof(info.bookValue) == "number") {
       data = info.currentPrice / info.bookValue;
@@ -108,8 +112,10 @@ function cell_update(symb, info, datatag)
   } else if(datatag == 'currentPrice') {
     data = info.currentPrice;
   }
-  if(!data) { return; }
-  td.innerHTML = data.toFixed(2);
+
+  if(typeof(data) == "number") {
+    td.innerHTML = data.toFixed(2);
+  }
 }
 
 function update_market_data()
