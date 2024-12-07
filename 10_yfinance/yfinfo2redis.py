@@ -28,16 +28,32 @@ def publish_message(r, symbol, key):
 	message = f'{key}'
 	r.publish(channel, message)
 
-def save_info(r, symbol, info):
-	cp = info['currentPrice']
+def save_crypto_info(r, symbol, info):
 	info_str = json.dumps(info)
-	key = f'YFINANCE:INFO:{symbol}'
+	key = f'YFINANCE:INFO:CRYPTO:{symbol}'
 	result = r.set(key, info_str)
 	if result:
-		print(f'SET {key:<20} ${cp}')
+		print(f'SET {key:<32}')
 		publish_message(r, symbol, key)
 	else:
-		print(f'SET {key:<20} FAILED!')
+		print(f'SET {key:<32} FAILED!')
+
+def save_stock_info(r, symbol, info):
+	cp = info['currentPrice']
+	info_str = json.dumps(info)
+	key = f'YFINANCE:INFO:STOCK:{symbol}'
+	result = r.set(key, info_str)
+	if result:
+		print(f'SET {key:<28} ${cp}')
+		publish_message(r, symbol, key)
+	else:
+		print(f'SET {key:<28} FAILED!')
+
+def save_info(r, symbol, info):
+	if info['quoteType'] == 'CRYPTOCURRENCY':
+		save_crypto_info(r, symbol, info)
+	else:
+		save_stock_info(r, symbol, info)
 
 def delete_if_exists(stock_d, key):
 	if key in stock_d:
@@ -62,7 +78,8 @@ if __name__ == '__main__':
 
 	acquire_environment()
 	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
-	res = yf.Ticker(args.symbol)
+	yf_symbol = args.symbol.replace('/','-')
+	res = yf.Ticker(yf_symbol)
 
 	delete_if_exists(res.info, 'companyOfficers')
 	delete_if_exists(res.info, 'longBusinessSummary')

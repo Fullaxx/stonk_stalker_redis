@@ -48,7 +48,19 @@ def yfinance_info_save(r, symbol, key, val):
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
-def yfinance_handle_new_info(r, key, symbol):
+def yfinance_handle_new_crypto_info(r, key, symbol):
+	val = r.get(key)
+	info = json.loads(val)
+	if 'previousClose' in info:
+		val = info['previousClose']
+		key = f'SS:LIVE:PREVIOUSCLOSE:{symbol}'
+		yfinance_info_save(r, symbol, key, val)
+	if 'marketCap' in info:
+		val = info['marketCap']
+		key = f'SS:LIVE:MARKETCAP:{symbol}'
+		yfinance_info_save(r, symbol, key, val)
+
+def yfinance_handle_new_stock_info(r, key, symbol):
 	val = r.get(key)
 	info = json.loads(val)
 	if 'currentPrice' in info:
@@ -84,9 +96,11 @@ def yfinance_handle_new_info(r, key, symbol):
 def handle_channel_message(r, p, msg_obj):
 #	print(msg_obj['channel'])
 	key = msg_obj['data']
-	symbol = key.split(':')[2]
-	if key.startswith('YFINANCE:INFO:'):
-		yfinance_handle_new_info(r, key, symbol)
+	symbol = key.split(':')[3]
+	if key.startswith('YFINANCE:INFO:STOCK:'):
+		yfinance_handle_new_stock_info(r, key, symbol)
+	if key.startswith('YFINANCE:INFO:CRYPTO:'):
+		yfinance_handle_new_crypto_info(r, key, symbol)
 
 def channel_handler(r, p, msg_obj):
 	if (msg_obj['type'] == 'message'):
