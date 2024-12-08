@@ -1,0 +1,47 @@
+networks:
+  ssr:
+
+services:
+
+  db:
+    image: redis
+    restart: "no"
+    ports:
+     - 172.17.0.1:9999:6379
+    volumes:
+      - /srv/docker/ssr/redis/data:/data
+
+  webserver:
+    image: fullaxx/ss_webserver
+    restart: "no"
+    depends_on:
+     - db
+    environment:
+     - REDIS_URL=redis://172.17.0.1:9999?db=0
+    ports:
+     - 172.17.0.1:7000:80
+    volumes:
+     - /srv/docker/ssr/config:/config
+
+  yfinance:
+    image: fullaxx/ss_yfinance
+    restart: "no"
+    depends_on:
+     - db
+    environment:
+     - REDIS_URL=redis://172.17.0.1:9999?db=0
+     - YFINANCE_REQUEST_INTERVAL=20
+    volumes:
+     - /srv/docker/ssr/config:/config
+
+  alpaca:
+    image: fullaxx/ss_alpaca
+    restart: "no"
+    depends_on:
+     - db
+    environment:
+     - REDIS_URL=redis://172.17.0.1:9999?db=0
+     - ALPACA_APIKEY=XXXXXXXXX
+     - ALPACA_SECRET=XXXXXXXXX
+    volumes:
+     - /srv/docker/ssr/config:/config

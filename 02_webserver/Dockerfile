@@ -1,6 +1,6 @@
 # ------------------------------------------------------------------------------
 # Install build tools and compile the code
-FROM debian:bookworm-slim AS build
+FROM fullaxx/ss_base_image AS build
 ADD darkhttpd /dark
 WORKDIR /dark
 RUN apt-get update && \
@@ -10,32 +10,13 @@ RUN apt-get update && \
 
 # ------------------------------------------------------------------------------
 # Pull base image
-FROM redis:bookworm
+FROM fullaxx/ss_base_image
 LABEL AUTHOR="Brett Kuskie <fullaxx@gmail.com>"
 
 # ------------------------------------------------------------------------------
-# Set environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=US/Eastern
-
-# ------------------------------------------------------------------------------
-# Install software and clean up
-COPY requirements.txt /install/
-RUN apt-get update && \
-	apt-get install -y --no-install-recommends \
-	  curl lsof nano tree vim-tiny \
-	  libmicrohttpd12 libhiredis0.14 supervisor python3-pip && \
-	pip3 install --break-system-packages -r /install/requirements.txt && \
-	apt-get clean && \
-	rm -rf /var/lib/apt/lists/* /var/tmp/* /tmp/* && \
-	mkdir /run/redis /var/log/redis /www && \
-	chown redis:redis /run/redis /var/log/redis /www
-
-# ------------------------------------------------------------------------------
 # Prepare the image
-COPY redis.conf /etc/redis/redis.conf
 COPY supervisord.conf /etc/supervisor/supervisord.conf
-COPY *.py shared/*.py /app/
+COPY *.py /app/
 COPY static/* /www/static/
 COPY --from=build /dark/darkhttpd.exe /app/
 

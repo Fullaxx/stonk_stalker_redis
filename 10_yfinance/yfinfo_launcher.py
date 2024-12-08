@@ -16,17 +16,18 @@ def bailmsg(*args, **kwargs):
 	sys.exit(1)
 
 if __name__ == '__main__':
-	ri_str = os.getenv('YF_REQUEST_INTERVAL')
-	request_interval = 30 if ri_str is None else int(ri_str)
+	ri_str = os.getenv('YFINANCE_REQUEST_INTERVAL')
+	request_interval = 25 if ri_str is None else int(ri_str)
 
 	symbols_list = []
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
-		symbols_str = v['symbols']
-		symbols_list += symbols_str.split(',')
+		if k.startswith('TABLE_'):
+			symbols_str = v['SYMBOLS']
+			symbols_list += symbols_str.split(',')
 
 #	When this loop is done, it will exit 0
 #	Current Design: supervisord will restart it automatically
 	for symbol in symbols_list:
-		os.system(f'/app/yf2redis.py -s {symbol}')
+		os.system(f'/app/yfinfo2redis.py -s {symbol}')
 		time.sleep(request_interval)
