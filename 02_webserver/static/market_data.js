@@ -27,6 +27,7 @@ function header_update(info)
 {
   symb = info.symbol
   th = document.getElementById(symb + "_th");
+  if(!th) { return; }
   remove_all_color(th);
   if(info.currentPrice > info.previousClose) {
     th.classList.add('symb_up');
@@ -61,6 +62,7 @@ function move_update(info)
 {
   symb = info.symbol
   td = document.getElementById(symb + "_move");
+  if(!td) { return; }
   remove_all_color(td);
   move = (info.currentPrice - info.previousClose) / info.previousClose;
   move_pct = (move*100.0).toFixed(2);
