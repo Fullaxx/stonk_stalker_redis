@@ -2,6 +2,12 @@
 import json
 from pathlib import Path
 
+def get_symbols_set_key():
+	return 'DASHBOARD:SYMBOLS_SET'
+
+def get_dashboard_ready_key():
+	return 'DASHBOARD:READY'
+
 def read_ss_config():
 	cfg_dir = Path('/config')
 	if not cfg_dir.is_dir():

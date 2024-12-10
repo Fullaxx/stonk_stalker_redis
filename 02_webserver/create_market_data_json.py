@@ -13,6 +13,7 @@ from contextlib import suppress
 
 sys.path.append('.')
 sys.path.append('/app')
+from ss_cfg import *
 from redis_helpers import connect_to_redis
 
 g_debug_python = False
@@ -66,7 +67,8 @@ def prepare_symbol(r, symbol):
 
 def prepare_marketdb(r):
 	marketdb = {}
-	symb_set = r.smembers('SSCFG:SYMBOLSET')
+	key = get_symbols_set_key()
+	symb_set = r.smembers(key)
 	for symbol in symb_set:
 		marketdb[symbol] = prepare_symbol(r, symbol)
 	return marketdb
@@ -76,6 +78,14 @@ def dump_marketdb(r, now_dt, filename):
 	market_str = json.dumps(marketdb)
 	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
+
+def wait_for_ready(r):
+	key = get_dashboard_ready_key()
+	ready = r.exists(key)
+	while not ready:
+		print('WAITING FOR READY ...', flush=True)
+		time.sleep(0.1)
+		ready = r.exists(key)
 
 def acquire_environment():
 	global g_debug_python
@@ -97,6 +107,7 @@ def acquire_environment():
 if __name__ == '__main__':
 	acquire_environment()
 	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
+	wait_for_ready(r)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)

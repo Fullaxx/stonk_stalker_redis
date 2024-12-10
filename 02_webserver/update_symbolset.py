@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# pip3 install redis,yfinance
+# pip3 install redis
 
 import os
 import sys
@@ -9,7 +9,7 @@ import redis
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import read_ss_config
+from ss_cfg import *
 from redis_helpers import connect_to_redis
 
 g_debug_python = False
@@ -22,7 +22,7 @@ def bailmsg(*args, **kwargs):
 	sys.exit(1)
 
 def save_symbols(r, symbols_str):
-	key = f'SSCFG:SYMBOLSET'
+	key = get_symbols_set_key()
 	symbols_list = symbols_str.split(',')
 	num_updated = r.sadd(key, *symbols_list)
 	print(f'{key} {symbols_list}: {num_updated}', flush=True)
@@ -47,15 +47,16 @@ if __name__ == '__main__':
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 #	Delete the set and re-create??
-#	key = f'SSCFG:SYMBOLSET'
-#	r.delete(key)
+	key = get_symbols_set_key()
+	r.delete(key)
 
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
 		if k.startswith('TABLE_'):
 			save_symbols(r, v['SYMBOLS'])
 
-#	r.set('SSCFG:SYMBOLSET:READY') EX 15
+	key = get_dashboard_ready_key()
+	r.set(key, 'READY', ex=10)
 
-	time.sleep(2)
+	time.sleep(3)
 #	Sleep for a bit so supervisord knows all is well
