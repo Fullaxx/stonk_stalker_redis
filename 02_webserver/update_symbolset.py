@@ -46,17 +46,19 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-#	Delete the set and re-create??
+#	Delete the set and re-create
 	key = get_symbols_set_key()
 	r.delete(key)
 
+#	Read the config and create a SET of symbols
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
 		if k.startswith('TABLE_'):
 			save_symbols(r, v['SYMBOLS'])
 
+#	Inform others that we are ready
 	key = get_dashboard_ready_key()
 	r.set(key, 'READY', ex=10)
 
-	time.sleep(3)
 #	Sleep for a bit so supervisord knows all is well
+	time.sleep(3)
