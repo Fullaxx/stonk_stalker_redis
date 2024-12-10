@@ -2,6 +2,13 @@
 import time
 import redis
 
+def wait_for_ready(r, key, interval):
+	ready = r.exists(key)
+	while not ready:
+#		print('WAITING FOR READY ...', flush=True)
+		time.sleep(interval)
+		ready = r.exists(key)
+
 def configure_redis(r, v):
 #	https://stackoverflow.com/questions/67202021/whats-the-size-limitation-of-a-message-when-pub-sub-in-redis-channel
 #	buffer_config = r.config_get('client-output-buffer-limit')

@@ -20,8 +20,8 @@ import websocket
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import *
-from redis_helpers import connect_to_redis
+from ss_cfg import get_dashboard_ready_key,get_symbols_set_key
+from redis_helpers import connect_to_redis,wait_for_ready
 
 g_rc = None
 g_symbolset = None
@@ -189,14 +189,6 @@ def on_close(ws, close_status_code, close_msg):
 def on_open(ws):
 	print('Connection: Opened', flush=True)
 
-def wait_for_ready():
-	key = get_dashboard_ready_key()
-	ready = g_rc.exists(key)
-	while not ready:
-		print('WAITING FOR READY ...', flush=True)
-		time.sleep(0.1)
-		ready = g_rc.exists(key)
-
 def acquire_environment():
 	global g_etz, g_apikey, g_secret, g_exchange, g_debug_python
 
@@ -231,9 +223,9 @@ if __name__ == '__main__':
 	wssurl,redis_url = acquire_environment()
 
 	if redis_url is not None:
-		key = get_symbols_set_key()
 		g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
-		wait_for_ready()
+		key = get_symbols_set_key()
+		wait_for_ready(g_rc, key, 0.1)
 #		Acquite the list of symbols from redis
 		g_symbolset = g_rc.smembers(key)
 
