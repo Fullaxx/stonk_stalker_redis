@@ -39,7 +39,7 @@ def save_crypto_info(r, symbol, info):
 		print(f'SET {key:<32} FAILED!')
 
 def save_stock_info(r, symbol, info):
-	cp = info['currentPrice']
+	cp = info['currentPrice'] if 'currentPrice' in info else 0
 	info_str = json.dumps(info)
 	key = f'YFINANCE:INFO:STOCK:{symbol}'
 	result = r.set(key, info_str)
