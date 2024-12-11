@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
+# pip3 install redis
 
 import os
 import sys
 import time
+import redis
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import read_ss_config
+from ss_cfg import get_dashboard_ready_key,read_ss_config
+from redis_helpers import connect_to_redis,wait_for_ready
+
+g_debug_python = False
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -20,10 +25,7 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def gen_html_table(k, v, dc):
-	table_name = v['TABLENAME']
-	table_type = v['TABLETYPE']
-	symbols_str = v['SYMBOLS']
+def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	symbols_list = symbols_str.split(',')
 
 	html = '<table>'
@@ -136,7 +138,7 @@ def gen_html_head(cfg):
 	html += '</head>'
 	return html
 
-def gen_html_body(cfg):
+def gen_html_body(r, cfg):
 	html = '<body>'
 	html += '<center>'
 	html += '<h2>Stonk Stalker</h2>'
@@ -145,25 +147,50 @@ def gen_html_body(cfg):
 	dash_config = cfg['DASHBOARD_CONFIG']
 	for k,v in cfg.items():
 		if k.startswith('TABLE_'):
-			html += gen_html_table(k,v,dash_config)
+			table_name = v['TABLENAME']
+			table_type = v['TABLETYPE']
+			key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
+			symbols_str = r.get(key)
+			html += gen_html_table(k, table_name, table_type, symbols_str, dash_config)
 	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
 	html += '</center>'
 	html += '</body>'
 	return html
 
-def gen_index_html(cfg):
+def gen_index_html(r, cfg):
 	html = '<!DOCTYPE html>'
 	html += '<html lang="en">'
 	html += gen_html_head(cfg)
-	html += gen_html_body(cfg)
+	html += gen_html_body(r, cfg)
 	html += '</html>'
 	write_to_file(html, 'index.html')
 
-if __name__ == '__main__':
+def acquire_environment():
+	global g_debug_python
+
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
 
+	redis_url = os.getenv('REDIS_URL')
+	if redis_url is None: bailmsg('Set REDIS_URL')
+
+	debug_env_var = os.getenv('DEBUG_PYTHON')
+	if debug_env_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (debug_env_var.startswith(flags)): g_debug_python = True
+		if (debug_env_var == 'on'): g_debug_python = True
+		if (debug_env_var == 'ON'): g_debug_python = True
+
+	return redis_url
+
+if __name__ == '__main__':
+	redis_url = acquire_environment()
+	r = connect_to_redis(redis_url, True, False, g_debug_python)
+
+	key = get_dashboard_ready_key()
+	wait_for_ready(r, key, 0.1)
+
 	ss_config = read_ss_config()
-	gen_index_html(ss_config)
+	gen_index_html(r, ss_config)
 	time.sleep(2)
 #	Sleep for a bit so supervisord knows all is well
