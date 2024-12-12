@@ -30,5 +30,5 @@ if __name__ == '__main__':
 #	When this loop is done, it will exit 0
 #	Current Design: supervisord will restart it automatically
 	for symbol in symbols_list:
-		os.system(f'/app/yfinfo2redis.py -s {symbol}')
+		os.system(f'/app/ticker2redis.py -s {symbol}')
 		time.sleep(request_interval)
