@@ -17,7 +17,7 @@ def bailmsg(*args, **kwargs):
 
 if __name__ == '__main__':
 	ri_str = os.getenv('YFINANCE_REQUEST_INTERVAL')
-	request_interval = 20 if ri_str is None else int(ri_str)
+	request_interval = 15 if ri_str is None else int(ri_str)
 
 #	Acquite the list of symbols from the config
 	symbols_list = []
