@@ -60,7 +60,6 @@ def yfinance_handle_new_stock_calendar(r, key, symbol):
 		else: diff_str = diff.split(',')[0]
 		if (i == 0): dtr_str = diff_str
 		else: dtr_str += f', {diff_str}'
-	print(dtr_str)
 	key = f'DASHBOARD:DATA:DAYSTILLREPORT:{symbol}'
 	yfinance_dashboard_save(r, symbol, key, dtr_str)
 
