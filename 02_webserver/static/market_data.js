@@ -117,10 +117,14 @@ function cell_update(info, datatag)
     data = info.previousClose;
   } else if(datatag == 'currentPrice') {
     data = info.currentPrice;
+  } else if(datatag == 'dtr') {
+    data = info.dtr;
   }
 
   if(typeof(data) == "number") {
     td.innerHTML = data.toFixed(2);
+  } else if(typeof(data) == "string") {
+    td.innerHTML = data;
   }
 }
 
@@ -133,6 +137,7 @@ function update_market_data()
       header_update(data[key]);
       move_update(data[key]);
       mcap_update(data[key]);
+      cell_update(data[key], 'dtr')
       cell_update(data[key], 'pbRatio')
       cell_update(data[key], 'forwardPE')
       cell_update(data[key], 'currentPrice')

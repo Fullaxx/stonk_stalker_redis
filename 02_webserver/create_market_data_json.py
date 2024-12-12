@@ -39,6 +39,7 @@ def prepare_symbol(r, symbol):
 #	What happenes if we default these to NULL?
 	symb_dict = {
 		'symbol':fsymb,
+		'dtr':'',
 		'currentPrice':'',
 		'bookValue':'',
 		'forwardPE':'',
@@ -47,6 +48,13 @@ def prepare_symbol(r, symbol):
 		'trailingPegRatio':'',
 		'priceToSalesTrailing12Months':''
 	}
+
+#	Reformat DTR string
+	dtr = r.get(f'DASHBOARD:DATA:DAYSTILLREPORT:{symbol}')
+	if dtr is not None:
+		first_only = dtr.split(',')[0]
+		simplified = first_only.replace(' days', 'd').replace(' day', 'd')
+		symb_dict['dtr'] = simplified
 
 	currentPrice = r.get(f'SS:LIVE:CURRENTPRICE:{symbol}')
 	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
