@@ -17,6 +17,8 @@ from ss_cfg import get_dashboard_ready_key,get_symbols_set_key
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
+g_market_json_creation_interval = 4
+
 g_shutdown = False
 def signal_handler(sig, frame):
 	global g_shutdown
@@ -53,8 +55,8 @@ def prepare_symbol(r, symbol):
 	dtr = r.get(f'DASHBOARD:DATA:DAYSTILLREPORT:{symbol}')
 	if dtr is not None:
 		first_only = dtr.split(',')[0]
-		simplified = first_only.replace(' days', 'd').replace(' day', 'd')
-		symb_dict['dtr'] = simplified
+		dtr_formatted = first_only.replace(' days', 'd').replace(' day', 'd')
+		symb_dict['dtr'] = dtr_formatted
 
 #	FPE needs to be represented as a string, due to possible inf??
 	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
@@ -145,5 +147,5 @@ if __name__ == '__main__':
 		if (now_s >= next):
 			dump_marketdb(r, now_dt, f'marketdb.json')
 			dump_marketlist(r, now_dt, f'marketlist.json')
-			next = now_s + 4
+			next = now_s + g_market_json_creation_interval
 		time.sleep(0.1)
