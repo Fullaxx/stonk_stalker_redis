@@ -8,7 +8,7 @@ import redis
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import get_dashboard_ready_key,read_ss_config
+from ss_cfg import get_symbols_set_key,get_dashboard_ready_key,read_ss_config
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
@@ -151,6 +151,10 @@ def gen_html_body(r, cfg):
 	html += '<center>'
 	html += '<h2>Stonk Stalker</h2>'
 	html += '<h3><div id="time"></div></h3>'
+
+	key = get_symbols_set_key()
+	symbols_count = r.scard(key)
+	html += '<h4><div id="symbol_count">Loaded ' + str(symbols_count) + ' Symbols</div></h4>'
 
 	dash_config = cfg['DASHBOARD_CONFIG']
 	for k,v in cfg.items():
