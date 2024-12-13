@@ -13,7 +13,7 @@ ENV TZ=US/Eastern
 COPY requirements.txt /install/
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	  curl htop lsof nano tree vim-tiny \
+	  curl htop jq less lsof nano tree vim-tiny \
 	  libmicrohttpd12 libhiredis0.14 supervisor python3-pip && \
 	pip3 install -r /install/requirements.txt && \
 	apt-get clean && \
