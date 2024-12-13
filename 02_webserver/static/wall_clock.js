@@ -12,7 +12,12 @@ function time_update() {
   $('[id="time"]').html(time_str);
 }
 
-function time_init(symbol_list)
+function time_init()
 {
   setInterval(time_update, 1000);
 }
+
+/*
+// Just in case we have more trouble with inline javascript
+$(document).ready(function(){ time_init(); });
+*/
