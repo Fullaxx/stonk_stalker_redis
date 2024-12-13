@@ -104,7 +104,7 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 			html += '<td>DTR</td>'
 			for symb in symbols_list:
 				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_dtr class=dtr></td>'
+				html += f'<td id={fsymb}_dtr></td>'
 			html += '</tr>'
 
 	if dc['DISPLAY_OTHER_URLS']:
