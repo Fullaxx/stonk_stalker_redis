@@ -40,10 +40,10 @@ def prepare_symbol(r, symbol):
 	symb_dict = {
 		'symbol':fsymb,
 		'dtr':'',
-		'currentPrice':'',
 		'bookValue':'',
 		'forwardPE':'',
 		'marketCap':'',
+		'currentPrice':'',
 		'previousClose':'',
 		'trailingPegRatio':'',
 		'priceToSalesTrailing12Months':''
@@ -56,16 +56,26 @@ def prepare_symbol(r, symbol):
 		simplified = first_only.replace(' days', 'd').replace(' day', 'd')
 		symb_dict['dtr'] = simplified
 
+#	I don't know what the F%@& is happening here
+#	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
+#	if forwardPE is not None:
+#		fval = float(forwardPE)
+#		if (forwardPE == 'inf'):
+#			symb_dict['forwardPE'] = 0
+#		else:
+#			symb_dict['forwardPE'] = fval
+
 	currentPrice = r.get(f'SS:LIVE:CURRENTPRICE:{symbol}')
 	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
 	previousClose = r.get(f'SS:LIVE:PREVIOUSCLOSE:{symbol}')
 	if previousClose is not None: symb_dict['previousClose'] = float(previousClose)
-	bookValue = r.get(f'SS:LIVE:BOOKVALUE:{symbol}')
-	if bookValue is not None: symb_dict['bookValue'] = float(bookValue)
-	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
-	if forwardPE is not None: symb_dict['forwardPE'] = float(forwardPE)
 	marketCap = r.get(f'SS:LIVE:MARKETCAP:{symbol}')
 	if marketCap is not None: symb_dict['marketCap'] = float(marketCap)
+	bookValue = r.get(f'SS:LIVE:BOOKVALUE:{symbol}')
+	if bookValue is not None: symb_dict['bookValue'] = float(bookValue)
+#	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
+#	if forwardPE is not None: print(symbol, float(forwardPE))
+#	if forwardPE is not None: symb_dict['forwardPE'] = float(forwardPE)
 	trailingPegRatio = r.get(f'SS:LIVE:TRAILINGPEGRATIO:{symbol}')
 	if trailingPegRatio is not None: symb_dict['trailingPegRatio'] = float(trailingPegRatio)
 	priceToSalesTrailing12Months = r.get(f'SS:LIVE:PRICETOSALESTRAILING12MONTHS:{symbol}')
@@ -87,6 +97,21 @@ def dump_marketdb(r, now_dt, filename):
 	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
 
+def prepare_marketlist(r):
+	marketlist = []
+	key = get_symbols_set_key()
+	symb_set = r.smembers(key)
+	for symbol in symb_set:
+		symbol_obj = prepare_symbol(r, symbol)
+		marketlist.append(symbol_obj)
+	return marketlist
+
+def dump_marketlist(r, now_dt, filename):
+	marketlist = prepare_marketlist(r)
+	market_str = json.dumps(marketlist)
+	print(f'{now_dt} Writing {filename} ...', flush=True)
+	write_to_file(market_str, filename)
+
 def acquire_environment():
 	global g_debug_python
 
@@ -95,7 +120,8 @@ def acquire_environment():
 	with suppress(FileExistsError): os.mkdir('market_data')
 	os.chdir('market_data')
 
-	if os.getenv('REDIS_URL') is None: bailmsg('Set REDIS_URL')
+	redis_url = os.getenv('REDIS_URL')
+	if redis_url is None: bailmsg('Set REDIS_URL')
 
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
@@ -104,9 +130,11 @@ def acquire_environment():
 		if (debug_env_var == 'on'): g_debug_python = True
 		if (debug_env_var == 'ON'): g_debug_python = True
 
+	return redis_url
+
 if __name__ == '__main__':
-	acquire_environment()
-	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
+	redis_url = acquire_environment()
+	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	key = get_dashboard_ready_key()
 	wait_for_ready(r, key, 0.1)
@@ -116,11 +144,11 @@ if __name__ == '__main__':
 	signal.signal(signal.SIGQUIT, signal_handler)
 
 	next = 0
-	filename = f'market.json'
 	while not g_shutdown:
 		now_dt = datetime.utcnow()
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
-			dump_marketdb(r, now_dt, filename)
-			next = now_s + 15
+			dump_marketdb(r, now_dt, f'marketdb.json')
+			dump_marketlist(r, now_dt, f'marketlist.json')
+			next = now_s + 4
 		time.sleep(0.1)

@@ -128,28 +128,64 @@ function cell_update(info, datatag)
   }
 }
 
-function update_market_data()
+function update_symbol(obj)
 {
-  $.getJSON( "market_data/market.json", function(data) {
+  header_update(obj);
+  move_update(obj);
+  mcap_update(obj);
+  cell_update(obj, 'dtr')
+  cell_update(obj, 'pbRatio')
+  cell_update(obj, 'forwardPE')
+  cell_update(obj, 'currentPrice')
+  cell_update(obj, 'previousClose')
+  cell_update(obj, 'trailingPegRatio')
+  cell_update(obj, 'priceToSalesTrailing12Months')
+}
+
+function update_market_data_via_getJSON()
+{
+  //console.log('update_market_data_via_getJSON()')
+
+  $.getJSON( 'market_data/marketdb.json', function(data) {
     //console.log(data)
     for (let key in data) {
       //console.log(key, data[key]);
-      header_update(data[key]);
-      move_update(data[key]);
-      mcap_update(data[key]);
-      cell_update(data[key], 'dtr')
-      cell_update(data[key], 'pbRatio')
-      cell_update(data[key], 'forwardPE')
-      cell_update(data[key], 'currentPrice')
-      cell_update(data[key], 'previousClose')
-      cell_update(data[key], 'trailingPegRatio')
-      cell_update(data[key], 'priceToSalesTrailing12Months')
+      symbobj = data[key]
+      update_symbol(symbobj)
     }
+  }).fail(function(xhr, status, error) {
+    console.log('getJSON() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
+  });
+}
+
+function update_market_data_via_object()
+{
+  $.get('market_data/marketdb.json', function(data) {
+    const jsonobj = JSON.parse(data);
+    for (let key in jsonobj) {
+      symbobj = jsonobj[key]
+      update_symbol(symbobj)
+    }
+  }).fail(function(xhr, status, error) {
+    console.log('get() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
+  });
+}
+
+function update_market_data_via_list()
+{
+  $.get('market_data/marketlist.json', function(data) {
+    const jsonarray = JSON.parse(data);
+    for (i in jsonarray) {
+      symbobj = jsonarray[i]
+      update_symbol(symbobj)
+    }
+  }).fail(function(xhr, status, error) {
+    console.log('get() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
   });
 }
 
 function market_data_init(market_data_fetch_interval)
 {
-  update_market_data(); //Do it once first
-  setInterval(update_market_data, market_data_fetch_interval);
+  update_market_data_via_list(); //Do it once first
+  setInterval(update_market_data_via_list, market_data_fetch_interval);
 }
