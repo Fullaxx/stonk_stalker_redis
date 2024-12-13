@@ -56,14 +56,12 @@ def prepare_symbol(r, symbol):
 		simplified = first_only.replace(' days', 'd').replace(' day', 'd')
 		symb_dict['dtr'] = simplified
 
-#	I don't know what the F%@& is happening here
-#	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
-#	if forwardPE is not None:
-#		fval = float(forwardPE)
-#		if (forwardPE == 'inf'):
-#			symb_dict['forwardPE'] = 0
-#		else:
-#			symb_dict['forwardPE'] = fval
+#	FPE needs to be represented as a string, due to possible inf??
+	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
+	if forwardPE is not None:
+		fval = float(forwardPE)
+		fpe_str = '%.2f' % round(fval, 2)
+		symb_dict['forwardPE'] = fpe_str
 
 	currentPrice = r.get(f'SS:LIVE:CURRENTPRICE:{symbol}')
 	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
@@ -73,9 +71,6 @@ def prepare_symbol(r, symbol):
 	if marketCap is not None: symb_dict['marketCap'] = float(marketCap)
 	bookValue = r.get(f'SS:LIVE:BOOKVALUE:{symbol}')
 	if bookValue is not None: symb_dict['bookValue'] = float(bookValue)
-#	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
-#	if forwardPE is not None: print(symbol, float(forwardPE))
-#	if forwardPE is not None: symb_dict['forwardPE'] = float(forwardPE)
 	trailingPegRatio = r.get(f'SS:LIVE:TRAILINGPEGRATIO:{symbol}')
 	if trailingPegRatio is not None: symb_dict['trailingPegRatio'] = float(trailingPegRatio)
 	priceToSalesTrailing12Months = r.get(f'SS:LIVE:PRICETOSALESTRAILING12MONTHS:{symbol}')
