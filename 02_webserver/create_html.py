@@ -147,14 +147,14 @@ def gen_html_head(cfg):
 	return html
 
 def gen_html_body(r, cfg):
-	html = '<body>'
-	html += '<center>'
-	html += '<h2>Stonk Stalker</h2>'
-	html += '<h3><div id="time"></div></h3>'
-
+#	Get total count of symbols we are tracking
 	key = get_symbols_set_key()
 	symbols_count = r.scard(key)
-	html += '<h4><div id="symbol_count">Loaded ' + str(symbols_count) + ' Symbols</div></h4>'
+
+	html = '<body>'
+	html += '<center>'
+	html += f'<h2>Stonk Stalker ({symbols_count} Symbols)</h2>'
+	html += '<h3><div id="time"></div></h3>'
 
 	dash_config = cfg['DASHBOARD_CONFIG']
 	for k,v in cfg.items():
