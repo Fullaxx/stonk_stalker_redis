@@ -17,7 +17,8 @@ from ss_cfg import get_dashboard_ready_key,get_symbols_set_key
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
-g_market_json_creation_interval = 4
+g_market_json_creation_interval = 5
+
 
 g_shutdown = False
 def signal_handler(sig, frame):
@@ -110,7 +111,7 @@ def dump_marketlist(r, now_dt, filename):
 	write_to_file(market_str, filename)
 
 def acquire_environment():
-	global g_debug_python
+	global g_market_json_creation_interval, g_debug_python
 
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
@@ -119,6 +120,9 @@ def acquire_environment():
 
 	redis_url = os.getenv('REDIS_URL')
 	if redis_url is None: bailmsg('Set REDIS_URL')
+
+	env_val = os.getenv('MARKET_DATA_CREATE_INTERVAL')
+	if env_val is not None: g_market_json_creation_interval = int(env_val)
 
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
