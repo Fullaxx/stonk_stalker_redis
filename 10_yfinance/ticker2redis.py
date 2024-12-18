@@ -41,7 +41,7 @@ def save_crypto_info(r, symbol, info):
 		print(f'SET {key:<32}')
 		publish_message(r, symbol, key)
 	else:
-		print(f'SET {key:<32} FAILED!')
+		eprint(f'SET {key:<32} FAILED!')
 
 def save_stock_info(r, symbol, info):
 	delete_if_exists(info, 'companyOfficers')
@@ -54,7 +54,7 @@ def save_stock_info(r, symbol, info):
 		print(f'SET {key:<28} ${cp}')
 		publish_message(r, symbol, key)
 	else:
-		print(f'SET {key:<28} FAILED!')
+		eprint(f'SET {key:<28} FAILED!')
 
 def save_stock_calendar(r, symbol, calendar):
 	if g_debug_python: pprint(calendar)
@@ -72,14 +72,19 @@ def save_stock_calendar(r, symbol, calendar):
 		print(f'SET {key:<28} {edates_str}')
 		publish_message(r, symbol, key)
 	else:
-		print(f'SET {key:<28} FAILED!')
+		eprint(f'SET {key:<28} FAILED!')
 #	print(edates_str)
 
 def process_yfinance_response(r, symbol, res):
+	info = res.info
+	if info is None:
+		eprint(f'{symbol} has no info!')
+		return
+
 	if res.info['quoteType'] == 'CRYPTOCURRENCY':
-		save_crypto_info(r, symbol, res.info)
+		save_crypto_info(r, symbol, info)
 	else:
-		save_stock_info(r, symbol, res.info)
+		save_stock_info(r, symbol, info)
 		save_stock_calendar(r, symbol, res.calendar)
 
 def acquire_environment():
