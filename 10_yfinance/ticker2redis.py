@@ -85,7 +85,8 @@ def process_yfinance_response(r, symbol, res):
 def acquire_environment():
 	global g_debug_python
 
-	if os.getenv('REDIS_URL') is None: bailmsg('Set REDIS_URL')
+	redis_url = os.getenv('REDIS_URL')
+	if redis_url is None: bailmsg('Set REDIS_URL')
 
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
@@ -94,13 +95,15 @@ def acquire_environment():
 		if (debug_env_var == 'on'): g_debug_python = True
 		if (debug_env_var == 'ON'): g_debug_python = True
 
+	return redis_url
+
 if __name__ == '__main__':
 	parser = ArgumentParser()
 	parser.add_argument('--symbol', '-s', type=str, required=True)
 	args = parser.parse_args()
 
-	acquire_environment()
-	r = connect_to_redis(os.getenv('REDIS_URL'), True, False, g_debug_python)
+	redis_url = acquire_environment()
+	r = connect_to_redis(redis_url, True, False, g_debug_python)
 	yf_symbol = args.symbol.replace('/','-')
 	res = yf.Ticker(yf_symbol)
 	process_yfinance_response(r, args.symbol, res)
