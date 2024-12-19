@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
-# pip3 install redis,yfinance
+# pip3 install redis,pandas,pandas_ta,yfinance
 
 import os
 import sys
 import csv
 import json
+import time
 import redis
 import shutil
 import pandas as pd
 import pandas_ta as ta
 import yfinance as yf
 
-from pprint import pprint
-from pytz import timezone
-from datetime import datetime
+#from pprint import pprint
+#from pytz import timezone
+from datetime import datetime,date
 from contextlib import suppress
 #from argparse import ArgumentParser
 
@@ -33,13 +34,21 @@ def bailmsg(*args, **kwargs):
 
 def publish_message(r, symbol, key):
 #	Publish a message indicating an update to specified symbol
-	channel = f'SOURCE:YFINANCE:INDICATORS:UPDATED'
+	channel = f'SOURCE:YFINANCE:UPDATED'
 	message = f'{key}'
 	r.publish(channel, message)
 
-def publich_macro_dict(symbol, macro):
-	daily_indicators = {symbol: macro}
-	pprint(daily_indicators)
+# GOOGL {"CLOSE": 188.4, "SMA_50": 173.31, "SMA_100": 167.63, "SMA_200": 167.3, "BB_LOWER": 157.21, "BB_MID": 178.3, "BB_UPPER": 199.4, "OPEN": 195.22, "HIGH": 197.0, "LOW": 187.74, "BB_PCT": 0.74, "1Y_LOW": 130.67, "1Y_HIGH": 201.42, "SYMBOL": "GOOGL", "DATE": "2024-12-19"}
+# BRK/B {"CLOSE": 446.59, "SMA_50": 463.56, "SMA_100": 457.01, "SMA_200": 434.6, "BB_LOWER": 448.39, "BB_MID": 467.91, "BB_UPPER": 487.42, "OPEN": 457.06, "HIGH": 458.73, "LOW": 446.09, "BB_PCT": -0.05, "1Y_LOW": 353.63, "1Y_HIGH": 491.67, "SYMBOL": "BRK-B", "DATE": "2024-12-19"}
+def publish_macro_dict(r, yf_symbol, macro):
+	symbol = yf_symbol.replace('-','/')
+	macro['SYMBOL'] = yf_symbol
+	macro['DATE'] = f'{date.today()}'
+	json_str = json.dumps(macro)
+	print(symbol, json_str)
+	key = f'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'
+	r.set(key, json_str)
+	publish_message(r, symbol, key)
 
 def rename_strategy_columns(df):
 	new_STOCH_column_names = {'STOCHk_14_3_3':'STOCHk_14','STOCHd_14_3_3':'STOCHd_14'}
@@ -64,7 +73,9 @@ def get_macro_indicators(filename, before_this_date):
 	macro['SMA_100'] = 0
 	macro['SMA_200'] = 0
 	macro['BB_LOWER'] = 0
+	macro['BB_MID'] = 0
 	macro['BB_UPPER'] = 0
+	macro['BB_PCT'] = 0
 	with open(filename) as f:
 		reader = csv.DictReader(f, delimiter=',', quotechar='"')
 		for row in reader:
@@ -94,13 +105,14 @@ def get_macro_indicators(filename, before_this_date):
 			if row_bb_upper: macro['BB_UPPER'] = float(row_bb_upper)
 			row_bb_pct = row.get('BBp')
 			if row_bb_pct: macro['BB_PCT'] = float(row_bb_pct)
-	macro['PERIOD_LOW'] = per_lo
-	macro['PERIOD_HIGH'] = per_hi
+	macro['1Y_LOW'] = per_lo
+	macro['1Y_HIGH'] = per_hi
 	return macro
 
-def gen_daily_csv(df, csv_filename):
+def gen_daily_csv(df, yf_symbol):
 #	Drop the rows where at least one element is missing in the specified columns
 	df = df.dropna(subset=['Open','High','Low','Close'])
+	if df.empty: return None
 
 #	Add Close%Change and Volume%Change columns
 	df['C%'] = df['Close'].pct_change().apply(lambda x: x*100)
@@ -129,35 +141,55 @@ def gen_daily_csv(df, csv_filename):
 	df.ta.strategy(DailyStrategy)
 	df = rename_strategy_columns(df)
 	df = df.round(decimals=2)
+	csv_filename = f'{g_datadir}/{yf_symbol}.1d.csv'
 	df.to_csv(csv_filename, index=True, sep=',', encoding='utf-8')
+	return csv_filename
 
-def gen_daily_indicators(pickle_filename, symb_list, r):
+# Generate a dictionary of macro indicators
+# the key is yf_symbol
+# the value is a json object of data
+def gen_daily_indicators(pickle_filename, yf_symbol_list, r):
+	macro_dict = {}
 	ticker = pd.read_pickle(pickle_filename)
-#	daily_macro_list = []
-	for symbol in symb_list:
-		df = ticker[symbol].copy()
-		csv_filename = f'{g_datadir}/{symbol}.1d.csv'
-		gen_daily_csv(df, csv_filename)
-		macro = get_macro_indicators(csv_filename, None)
-		publich_macro_dict(symbol, macro)
-#		daily_indicators = {symb: macro}
-#		daily_macro_list.append(daily_indicators)
-#	pprint(daily_macro_list)
-#	daily_indicators_str = json.dumps(daily_macro_list)
-#	print(daily_indicators_str)
-#	r.set('MARKET:DAILYINDICATORS', daily_indicators_str)
+	for yf_symbol in yf_symbol_list:
+		df = ticker[yf_symbol].copy()
+		csv_filename = gen_daily_csv(df, yf_symbol)
+		if csv_filename is not None:
+			macro = get_macro_indicators(csv_filename, None)
+			if macro is not None:
+				macro_dict[yf_symbol] = macro
 
-def download_pickle(r, table_name, symb_list):
+	return macro_dict
+
+def download_pickle(r, table_name, symbols_list):
 	pickle_filename = f'{g_datadir}/{table_name}.1d.pickle'
-	yfdata = yf.download(symb_list, period='1y', interval='1d', group_by='ticker', progress=False)
+	yfdata = yf.download(symbols_list, period='1y', interval='1d', group_by='ticker', progress=False)
 	yfdata.to_pickle(pickle_filename)
 	return pickle_filename
+
+#	Loop through each table and do the following:
+#	1) download a pickle
+#	2) generate daily indicators of each symbol in the table
+#	3) publish macro indicators for each symbol
+def process_table(table_name, val):
+	yf_symbols_list = []
+	symbols_list = val.split(',')
+	for s in symbols_list:
+		yf_symbol = s.replace('/','-')
+		yf_symbols_list.append(yf_symbol)
+
+	print(f'{table_name:<10} {val}')
+
+	pickle_filename = download_pickle(r, table_name, yf_symbols_list)
+	macro_dict = gen_daily_indicators(pickle_filename, yf_symbols_list, r)
+	for k,v in macro_dict.items():
+		publish_macro_dict(r, k, v)
 
 def acquire_environment():
 	global g_debug_python
 
 	redis_url = os.getenv('REDIS_URL')
-#	if redis_url is None: bailmsg('Set REDIS_URL')
+	if redis_url is None: bailmsg('Set REDIS_URL')
 
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
@@ -173,17 +205,18 @@ if __name__ == '__main__':
 #	parser.add_argument('--symbol', '-s', type=str, required=True)
 #	args = parser.parse_args()
 
-	r = None
 	redis_url = acquire_environment()
-	if redis_url is not None:
-		r = connect_to_redis(redis_url, True, False, g_debug_python)
-
-	symb_list = []
-	for s in ['AAPL', 'MSFT', 'NVDA', 'GOOGL', 'ORCL', 'AMZN', 'BRK/B']:
-		yf_symbol = s.replace('/','-')
-		symb_list.append(yf_symbol)
+	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	with suppress(FileExistsError): os.mkdir(g_datadir)
-	pickle_filename = download_pickle(r, 'table_name', symb_list)
-	gen_daily_indicators(pickle_filename, symb_list, r)
-#	shutil.rmtree(g_datadir)
+
+	searchpattern = f'DASHBOARD:TABLES:SORTED:MCAP:*'
+	for key in sorted(r.scan_iter(searchpattern)):
+		val = r.get(key)
+		table_name = key.split(':')[4]
+		table_name_formatted = table_name.replace('/','-')
+		process_table(table_name_formatted, val)
+		time.sleep(20)
+
+	if not g_debug_python:
+		shutil.rmtree(g_datadir)

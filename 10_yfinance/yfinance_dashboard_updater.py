@@ -48,6 +48,16 @@ def yfinance_dashboard_save(r, symbol, key, val):
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
+def yfinance_handle_new_stock_dailyindicators(r, key, symbol):
+	val = r.get(key)
+	data = json.loads(val)
+	bb_lo = data['BB_LOWER']
+	bb_mid = data['BB_MID']
+	bb_hi = data['BB_UPPER']
+	bb_pct = data['BB_PCT']
+	key = f'DASHBOARD:DATA:BBPCT:{symbol}'
+	yfinance_dashboard_save(r, symbol, key, bb_pct)
+
 def yfinance_handle_new_stock_calendar(r, key, symbol):
 	dtr_str = ''
 	val = r.get(key)
@@ -107,6 +117,8 @@ def yfinance_handle_new_crypto_info(r, key, symbol):
 		key = f'SS:LIVE:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'}
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:CALENDAR:STOCK:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:CRYPTO:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:STOCK:{symbol}'}
 def handle_channel_message(r, p, msg_obj):
@@ -119,6 +131,8 @@ def handle_channel_message(r, p, msg_obj):
 		yfinance_handle_new_stock_info(r, key, symbol)
 	if key.startswith('YFINANCE:CALENDAR:STOCK:'):
 		yfinance_handle_new_stock_calendar(r, key, symbol)
+	if key.startswith('YFINANCE:DAILYINDICATORS:STOCK:'):
+		yfinance_handle_new_stock_dailyindicators(r, key, symbol)
 
 def channel_handler(r, p, msg_obj):
 	if (msg_obj['type'] == 'message'):
