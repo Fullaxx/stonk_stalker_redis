@@ -112,6 +112,11 @@ if __name__ == '__main__':
 	key = get_symbols_set_key()
 	r.delete(key)
 
+#	Delete all the tables and recreate
+	searchpattern = f'DASHBOARD:TABLES:*'
+	for key in sorted(r.scan_iter(searchpattern)):
+		r.delete(key)
+
 #	Read the config and create a SET of symbols
 	ss_config = read_ss_config()
 	for k,v in ss_config.items():
