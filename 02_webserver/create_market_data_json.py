@@ -60,23 +60,23 @@ def prepare_symbol(r, symbol):
 		symb_dict['dtr'] = dtr_formatted
 
 #	FPE needs to be represented as a string, due to possible inf??
-	forwardPE = r.get(f'SS:LIVE:FORWARDPE:{symbol}')
+	forwardPE = r.get(f'DASHBOARD:DATA:FORWARDPE:{symbol}')
 	if forwardPE is not None:
 		fval = float(forwardPE)
 		fpe_str = '%.2f' % round(fval, 2)
 		symb_dict['forwardPE'] = fpe_str
 
-	currentPrice = r.get(f'SS:LIVE:CURRENTPRICE:{symbol}')
+	currentPrice = r.get(f'DASHBOARD:DATA:CURRENTPRICE:{symbol}')
 	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
-	previousClose = r.get(f'SS:LIVE:PREVIOUSCLOSE:{symbol}')
+	previousClose = r.get(f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}')
 	if previousClose is not None: symb_dict['previousClose'] = float(previousClose)
-	marketCap = r.get(f'SS:LIVE:MARKETCAP:{symbol}')
+	marketCap = r.get(f'DASHBOARD:DATA:MARKETCAP:{symbol}')
 	if marketCap is not None: symb_dict['marketCap'] = float(marketCap)
-	bookValue = r.get(f'SS:LIVE:BOOKVALUE:{symbol}')
+	bookValue = r.get(f'DASHBOARD:DATA:BOOKVALUE:{symbol}')
 	if bookValue is not None: symb_dict['bookValue'] = float(bookValue)
-	trailingPegRatio = r.get(f'SS:LIVE:TRAILINGPEGRATIO:{symbol}')
+	trailingPegRatio = r.get(f'DASHBOARD:DATA:TRAILINGPEGRATIO:{symbol}')
 	if trailingPegRatio is not None: symb_dict['trailingPegRatio'] = float(trailingPegRatio)
-	priceToSalesTrailing12Months = r.get(f'SS:LIVE:PRICETOSALESTRAILING12MONTHS:{symbol}')
+	priceToSalesTrailing12Months = r.get(f'DASHBOARD:DATA:PRICETOSALESTRAILING12MONTHS:{symbol}')
 	if priceToSalesTrailing12Months is not None: symb_dict['priceToSalesTrailing12Months'] = float(priceToSalesTrailing12Months)
 
 	return symb_dict

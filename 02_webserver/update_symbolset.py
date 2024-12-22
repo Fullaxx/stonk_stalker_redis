@@ -46,7 +46,7 @@ def get_mcap_value_yf(symbol):
 # Attempt to get mcap from redis first
 # If it doesnt exist, query yfinance for mcap
 def get_mcap_value(r, symbol):
-	key = f'SS:LIVE:MARKETCAP:{symbol}'
+	key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 	mcap_val = r.get(key)
 	if mcap_val is not None:
 		return int(mcap_val)
