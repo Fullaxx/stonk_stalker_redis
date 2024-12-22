@@ -38,7 +38,7 @@ def signal_handler(sig, frame):
 	g_shutdown = True
 
 def alpaca_1minbars_save_price(r, symbol, cp):
-	key = f'SS:LIVE:CURRENTPRICE:{symbol}'
+	key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 	result = r.set(key, cp)
 	if result:
 		print(f'SET {key:<20} ${cp}', flush=True)

@@ -78,31 +78,31 @@ def yfinance_handle_new_stock_info(r, key, symbol):
 	info = json.loads(val)
 	if 'currentPrice' in info:
 		val = info['currentPrice']
-		key = f'SS:LIVE:CURRENTPRICE:{symbol}'
+		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'previousClose' in info:
 		val = info['previousClose']
-		key = f'SS:LIVE:PREVIOUSCLOSE:{symbol}'
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'marketCap' in info:
 		val = info['marketCap']
-		key = f'SS:LIVE:MARKETCAP:{symbol}'
+		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'bookValue' in info:
 		val = info['bookValue']
-		key = f'SS:LIVE:BOOKVALUE:{symbol}'
+		key = f'DASHBOARD:DATA:BOOKVALUE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'forwardPE' in info:
 		val = info['forwardPE']
-		key = f'SS:LIVE:FORWARDPE:{symbol}'
+		key = f'DASHBOARD:DATA:FORWARDPE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'trailingPegRatio' in info:
 		val = info['trailingPegRatio']
-		key = f'SS:LIVE:TRAILINGPEGRATIO:{symbol}'
+		key = f'DASHBOARD:DATA:TRAILINGPEGRATIO:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'priceToSalesTrailing12Months' in info:
 		val = info['priceToSalesTrailing12Months']
-		key = f'SS:LIVE:PRICETOSALESTRAILING12MONTHS:{symbol}'
+		key = f'DASHBOARD:DATA:PRICETOSALESTRAILING12MONTHS:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 
 def yfinance_handle_new_crypto_info(r, key, symbol):
@@ -110,11 +110,11 @@ def yfinance_handle_new_crypto_info(r, key, symbol):
 	info = json.loads(val)
 	if 'previousClose' in info:
 		val = info['previousClose']
-		key = f'SS:LIVE:PREVIOUSCLOSE:{symbol}'
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'marketCap' in info:
 		val = info['marketCap']
-		key = f'SS:LIVE:MARKETCAP:{symbol}'
+		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'}
