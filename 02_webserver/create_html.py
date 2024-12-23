@@ -3,12 +3,12 @@
 
 import os
 import sys
+import json
 import time
 import redis
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import get_symbols_set_key,get_dashboard_ready_key,read_ss_config
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
@@ -148,8 +148,9 @@ def gen_html_head(cfg):
 
 def gen_html_body(r, cfg):
 #	Get total count of symbols we are tracking
-	key = get_symbols_set_key()
-	symbols_count = r.scard(key)
+	stocks_count = r.scard('DASHBOARD:SYMBOLS_SET:STOCKS')
+	crypto_count = r.scard('DASHBOARD:SYMBOLS_SET:CRYPTO')
+	symbols_count = int(stocks_count) + int(crypto_count)
 
 	html = '<body>'
 	html += '<center>'
@@ -199,10 +200,10 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	key = get_dashboard_ready_key()
-	wait_for_ready(r, key, 0.1)
+	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
 
-	ss_config = read_ss_config()
+	cfg_str = r.get('DASHBOARD:CONFIG')
+	ss_config = json.loads(cfg_str)
 	gen_index_html(r, ss_config)
-	time.sleep(2)
+	time.sleep(3)
 #	Sleep for a bit so supervisord knows all is well

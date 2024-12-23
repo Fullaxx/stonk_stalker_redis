@@ -4,13 +4,12 @@
 import os
 import sys
 import json
-import time
+#import time
 import redis
 import yfinance as yf
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import get_dashboard_ready_key,get_symbols_set_key,read_ss_config
 from redis_helpers import connect_to_redis
 
 g_debug_python = False
@@ -22,8 +21,14 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def save_symbols(r, symbols_str):
-	key = get_symbols_set_key()
+def save_symbols(r, table_type, symbols_str):
+	if (table_type == 'crypto'):
+		key = 'DASHBOARD:SYMBOLS_SET:CRYPTO'
+	elif (table_type == 'stock'):
+		key = 'DASHBOARD:SYMBOLS_SET:STOCKS'
+	else:
+		bailmsg('table_type must be stock or crypto!')
+
 	symbols_list = symbols_str.split(',')
 	num_updated = r.sadd(key, *symbols_list)
 	print(f'{key} {symbols_list}: {num_updated}', flush=True)
@@ -84,8 +89,9 @@ def process_table(r, k, v):
 	sort_tables_by_mcap = True
 
 	table_name = v['TABLENAME']
+	table_type = v['TABLETYPE']
 	symbols_str = v['SYMBOLS']
-	save_symbols(r, symbols_str)
+	save_symbols(r, table_type, symbols_str)
 	if sort_tables_by_mcap:
 		sort_table_by_mcap_and_save(r, table_name, symbols_str)
 
@@ -108,9 +114,10 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-#	Delete the set and re-create
-	key = get_symbols_set_key()
-	r.delete(key)
+#	Delete the set(s) and re-create
+	searchpattern = f'DASHBOARD:SYMBOLS_SET:*'
+	for key in sorted(r.scan_iter(searchpattern)):
+		r.delete(key)
 
 #	Delete all the tables and recreate
 	searchpattern = f'DASHBOARD:TABLES:*'
@@ -118,15 +125,8 @@ if __name__ == '__main__':
 		r.delete(key)
 
 #	Read the config and create a SET of symbols
-	ss_config = read_ss_config()
+	cfg_str = r.get('DASHBOARD:CONFIG')
+	ss_config = json.loads(cfg_str)
 	for k,v in ss_config.items():
 		if k.startswith('TABLE_'):
 			process_table(r, k, v)
-
-#	Inform others that we are ready
-	key = get_dashboard_ready_key()
-	r.set(key, 'READY', ex=10)
-	print(f'READY!', flush=True)
-
-#	Sleep for a bit so supervisord knows all is well
-	time.sleep(3)
