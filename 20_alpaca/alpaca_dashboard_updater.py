@@ -12,10 +12,8 @@ import os
 import sys
 import time
 import json
-#import pytz
 import redis
 import signal
-#import datetime
 
 sys.path.append('.')
 sys.path.append('/app')
@@ -50,7 +48,6 @@ def alpaca_handle_new_1minbar(r, key, symbol):
 	bar = json.loads(val)
 	cp = bar['c']
 	alpaca_1minbars_save_price(r, symbol, cp)
-#	print('ALPACA', symbol, cp, flush=True)
 
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:1MINBARS:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:DAILYBARS:{symbol}'}
