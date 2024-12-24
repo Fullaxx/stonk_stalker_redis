@@ -7,7 +7,7 @@ services:
     image: redis
     restart: "no"
     ports:
-     - 172.17.0.1:9999:6379
+     - 172.17.0.1:6379:6379
     volumes:
       - /srv/docker/ssr/redis/data:/data
 
@@ -17,7 +17,9 @@ services:
     depends_on:
      - db
     environment:
-     - REDIS_URL=redis://172.17.0.1:9999?db=0
+     - REDIS_URL=redis://172.17.0.1:6379?db=0
+     - JSON_FETCH_INTERVAL=3000
+     - MARKET_DATA_CREATE_INTERVAL=2
     ports:
      - 172.17.0.1:7000:80
     volumes:
@@ -29,8 +31,8 @@ services:
     depends_on:
      - db
     environment:
-     - REDIS_URL=redis://172.17.0.1:9999?db=0
-     - YFINANCE_REQUEST_INTERVAL=20
+     - REDIS_URL=redis://172.17.0.1:6379?db=0
+     - YFINANCE_REQUEST_INTERVAL=15
     volumes:
      - /srv/docker/ssr/config:/config
 
@@ -40,8 +42,10 @@ services:
     depends_on:
      - db
     environment:
-     - REDIS_URL=redis://172.17.0.1:9999?db=0
+     - REDIS_URL=redis://172.17.0.1:6379?db=0
      - ALPACA_APIKEY=XXXXXXXXX
      - ALPACA_SECRET=XXXXXXXXX
+     - STOCK_TRADES=AAPL,AMZN,ARM,AVGO,AXON,BLK,CART,CAT,DDOG,GOOGL,META,MSFT,MU,NFLX,NVDA,ORCL,PLTR,POWL,SMCI,TSLA,TSM,VRT,VST,WMT
+     - CRYPTO_TRADES=BTC/USD,ETH/USD,LTC/USD,DOGE/USD
     volumes:
      - /srv/docker/ssr/config:/config
