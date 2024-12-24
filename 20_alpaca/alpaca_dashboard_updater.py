@@ -35,7 +35,7 @@ def signal_handler(sig, frame):
 	global g_shutdown
 	g_shutdown = True
 
-def alpaca_1minbars_save_price(r, symbol, cp):
+def alpaca_dashboard_save_currentprice(r, symbol, cp):
 	key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 	result = r.set(key, cp)
 	if result:
@@ -43,12 +43,28 @@ def alpaca_1minbars_save_price(r, symbol, cp):
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
+def alpaca_handle_new_trade(r, key, symbol):
+	val = r.get(key)
+	trade = json.loads(val)
+	price = trade['p']
+	alpaca_dashboard_save_currentprice(r, symbol, price)
+
+#	We are ignoring quotes at the moment
+def alpaca_handle_new_quote(r, key, symbol):
+	val = r.get(key)
+	quote = json.loads(val)
+	bid_price = quote['bp']
+	ask_price = quote['ap']
+#	alpaca_dashboard_save_currentprice(r, symbol, bid_price)
+
 def alpaca_handle_new_1minbar(r, key, symbol):
 	val = r.get(key)
 	bar = json.loads(val)
 	cp = bar['c']
-	alpaca_1minbars_save_price(r, symbol, cp)
+	alpaca_dashboard_save_currentprice(r, symbol, cp)
 
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:TRADE:{symbol}'}
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:QUOTE:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:1MINBARS:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:DAILYBARS:{symbol}'}
 def handle_channel_message(r, p, msg_obj):
@@ -57,6 +73,10 @@ def handle_channel_message(r, p, msg_obj):
 	symbol = key.split(':')[2]
 	if key.startswith('ALPACA:1MINBARS:'):
 		alpaca_handle_new_1minbar(r, key, symbol)
+	if key.startswith('ALPACA:QUOTE:'):
+		alpaca_handle_new_quote(r, key, symbol)
+	if key.startswith('ALPACA:TRADE:'):
+		alpaca_handle_new_trade(r, key, symbol)
 
 def channel_handler(r, p, msg_obj):
 	if (msg_obj['type'] == 'message'):

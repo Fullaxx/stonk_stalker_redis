@@ -115,15 +115,26 @@ def handle_market_message_trade(ws, obj):
 	symbol = obj['S']
 	price = obj['p']
 	print(f'AlpacaTrade: {symbol} @ {price}', flush=True)
-#	if g_rc is not None:
-#		key = f'ALPACA:TRADE:{symbol}'
-#		g_rc.set(key, price)
+
+	if (g_rc is None): return
+#	if g_debug_python: print(f'AlpacaTrade: {symbol} @ {price}', flush=True)
+	key = f'ALPACA:TRADE:{symbol}'
+	val = json.dumps(obj)
+	g_rc.set(key, val)
+	publish_message(symbol, key)
 
 def handle_market_message_quote(ws, obj):
 	symbol = obj['S']
 	bid_price = obj['bp']
 	ask_price = obj['ap']
 	print(f'AlpacaQuote: {symbol} @ {bid_price} / {ask_price}', flush=True)
+
+	if (g_rc is None): return
+#	if g_debug_python: print(f'AlpacaQuote: {symbol} @ {bid_price} / {ask_price}', flush=True)
+	key = f'ALPACA:QUOTE:{symbol}'
+	val = json.dumps(obj)
+	g_rc.set(key, val)
+	publish_message(symbol, key)
 
 def handle_market_message_orderbook(ws, obj):
 	if g_debug_python: print('AlpacaOrderBook', flush=True)
@@ -139,13 +150,16 @@ def handle_market_message(ws, obj):
 	elif (msg_type == 'u'): handle_market_message_updatedbars(ws, obj)
 	else: print(obj, flush=True)
 
-def create_alpaca_wss_sub_msg():
+#	symbols_str = 'BLK,AAPL,MSFT,GOOGL,META,AMZN,NVDA,AVGO,MU,PLTR,SMCI,VRT,WMT,TSLA'
+#	symbols_str = 'BTC/USD,ETH/USD,LTC/USD,DOGE/USD'
+def create_alpaca_live_sub_msg():
 	subact = {'action':'subscribe'}
-#	list_of_symbols = args.symbols.split(',')
-#	if (g_exchange ==  'STOCK'): list_of_symbols = ['AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT']
-#	if (g_exchange == 'CRYPTO'): list_of_symbols = ['BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD']
+	if (g_exchange ==  'STOCK'): symbols_str = os.getenv('STOCK_TRADES')
+	if (g_exchange == 'CRYPTO'): symbols_str = os.getenv('CRYPTO_TRADES')
+	if symbols_str is not None:
+		list_of_symbols = symbols_str.split(',')
+		subact['trades'] = list_of_symbols
 #	subact['orderbooks']  = list_of_symbols
-#	subact['trades']      = list_of_symbols
 #	subact['quotes']      = list_of_symbols
 	subact['bars']        = ['*']
 	subact['updatedBars'] = ['*']
@@ -163,15 +177,18 @@ def create_alpaca_test_sub_msg():
 	print(sub_str)
 	return sub_str
 
+def create_alpaca_wss_sub_msg():
+	if (g_exchange == 'TEST'):
+		return create_alpaca_test_sub_msg()
+	else:
+		return create_alpaca_live_sub_msg()
+
 def handle_server_success(ws, obj):
 	print(obj, flush=True)
 	if (obj['msg'] == 'connected'):
 		ws.send('{"action":"auth","key":"%s","secret":"%s"}' % (g_apikey, g_secret))
 	if (obj['msg'] == 'authenticated'):
-		if (g_exchange == 'TEST'):
-			sub_str = create_alpaca_test_sub_msg()
-		else:
-			sub_str = create_alpaca_wss_sub_msg()
+		sub_str = create_alpaca_wss_sub_msg()
 		ws.send(sub_str)
 #		ws.send('{"action":"subscribe","trades":["BTC/USD","ETH/USD"],"quotes":["BTC/USD","bars":["*"],"updatedBars":["*"],"dailyBars":["*"]}')
 #		ws.send('{"action":"subscribe","trades":["BTC/USD","ETH/USD"],"quotes":["BTC/USD","ETH/USD"],"orderbooks":["BTC/USD","ETH/USD"]}')
