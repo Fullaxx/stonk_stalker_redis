@@ -5,7 +5,11 @@
 # python3 -m pip install websocket-client wsaccel rel
 #
 # https://alpaca.markets/learn/streaming-market-data/
+# https://docs.alpaca.markets/docs/streaming-market-data
 # https://docs.alpaca.markets/docs/real-time-stock-pricing-data
+# https://docs.alpaca.markets/docs/real-time-crypto-pricing-data
+# https://docs.alpaca.markets/docs/streaming-real-time-news
+# https://docs.alpaca.markets/docs/real-time-option-data
 
 import os
 import sys
@@ -14,17 +18,19 @@ import time
 import pytz
 import json
 import redis
-import _thread
 import datetime
 import websocket
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import get_dashboard_ready_key,get_symbols_set_key
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_rc = None
-g_symbolset = None
+g_symbols_set = None
+g_wait_for_ready = True
+
+g_debug_python = False
+g_websocket_trace = False
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -72,9 +78,9 @@ def publish_message(symbol, key):
 def handle_market_message_dailybars(ws, obj):
 	symbol = obj['S']
 #	if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
-	if (g_rc is None) or (g_symbolset is None): return
+	if (g_rc is None) or (g_symbols_set is None): return
 
-	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
+	if ((symbol in g_symbols_set) or (g_exchange == 'CRYPTO')):
 		if g_debug_python: print(f'AlpacaDailyBars: {obj}', flush=True)
 		key = f'ALPACA:DAILYBARS:{symbol}'
 		val = json.dumps(obj)
@@ -84,9 +90,9 @@ def handle_market_message_dailybars(ws, obj):
 def handle_market_message_updatedbars(ws, obj):
 	symbol = obj['S']
 #	if g_debug_python: print(f'AlpacaUpdatedBars: {obj}', flush=True)
-	if (g_rc is None) or (g_symbolset is None): return
+	if (g_rc is None) or (g_symbols_set is None): return
 
-	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
+	if ((symbol in g_symbols_set) or (g_exchange == 'CRYPTO')):
 		if g_debug_python: print(f'UpdatedBars: {symbol} @ {obj}', flush=True)
 		key = f'ALPACA:1MINBARS:{symbol}'
 		val = json.dumps(obj)
@@ -96,9 +102,9 @@ def handle_market_message_updatedbars(ws, obj):
 def handle_market_message_bars(ws, obj):
 	symbol = obj['S']
 #	if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
-	if (g_rc is None) or (g_symbolset is None): return
+	if (g_rc is None) or (g_symbols_set is None): return
 
-	if ((symbol in g_symbolset) or (g_exchange == 'CRYPTO')):
+	if ((symbol in g_symbols_set) or (g_exchange == 'CRYPTO')):
 		if g_debug_python: print(f'AlpacaBars: {symbol} @ {obj}', flush=True)
 		key = f'ALPACA:1MINBARS:{symbol}'
 		val = json.dumps(obj)
@@ -136,16 +142,25 @@ def handle_market_message(ws, obj):
 def create_alpaca_wss_sub_msg():
 	subact = {'action':'subscribe'}
 #	list_of_symbols = args.symbols.split(',')
-#	if (g_exchange ==  'STOCK'): list_of_symbols = ('AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT')
-#	if (g_exchange == 'CRYPTO'): list_of_symbols = ('BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD')
-#	json_list_of_symbols = json.dumps(list_of_symbols)
+#	if (g_exchange ==  'STOCK'): list_of_symbols = ['AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NVDA', 'AVGO', 'MU', 'PLTR', 'SMCI', 'VRT']
+#	if (g_exchange == 'CRYPTO'): list_of_symbols = ['BTC/USD', 'ETH/USD', 'LTC/USD', 'DOGE/USD']
 #	subact['orderbooks']  = list_of_symbols
 #	subact['trades']      = list_of_symbols
 #	subact['quotes']      = list_of_symbols
-	subact['bars']        = list('*')
-	subact['updatedBars'] = list('*')
-	subact['dailyBars']   = list('*')
+	subact['bars']        = ['*']
+	subact['updatedBars'] = ['*']
+	subact['dailyBars']   = ['*']
 	sub_str = json.dumps(subact)
+	return sub_str
+
+def create_alpaca_test_sub_msg():
+	subact = {'action':'subscribe'}
+	subact['orderbooks']  = ['FAKEPACA']
+	subact['trades']      = ['FAKEPACA']
+	subact['quotes']      = ['FAKEPACA']
+	subact['bars']        = ['*']
+	sub_str = json.dumps(subact)
+	print(sub_str)
 	return sub_str
 
 def handle_server_success(ws, obj):
@@ -153,7 +168,10 @@ def handle_server_success(ws, obj):
 	if (obj['msg'] == 'connected'):
 		ws.send('{"action":"auth","key":"%s","secret":"%s"}' % (g_apikey, g_secret))
 	if (obj['msg'] == 'authenticated'):
-		sub_str = create_alpaca_wss_sub_msg()
+		if (g_exchange == 'TEST'):
+			sub_str = create_alpaca_test_sub_msg()
+		else:
+			sub_str = create_alpaca_wss_sub_msg()
 		ws.send(sub_str)
 #		ws.send('{"action":"subscribe","trades":["BTC/USD","ETH/USD"],"quotes":["BTC/USD","bars":["*"],"updatedBars":["*"],"dailyBars":["*"]}')
 #		ws.send('{"action":"subscribe","trades":["BTC/USD","ETH/USD"],"quotes":["BTC/USD","ETH/USD"],"orderbooks":["BTC/USD","ETH/USD"]}')
@@ -190,7 +208,7 @@ def on_open(ws):
 	print('Connection: Opened', flush=True)
 
 def acquire_environment():
-	global g_etz, g_apikey, g_secret, g_exchange, g_debug_python
+	global g_etz, g_apikey, g_secret, g_exchange, g_wait_for_ready, g_debug_python
 
 	g_etz = pytz.timezone('US/Eastern')
 
@@ -207,9 +225,23 @@ def acquire_environment():
 
 	if (g_exchange == 'CRYPTO'): wssurl = 'wss://stream.data.alpaca.markets/v1beta3/crypto/us'
 	elif (g_exchange == 'STOCK'): wssurl = 'wss://stream.data.alpaca.markets/v2/iex'
-	else: bailmsg('EXCHANGE == <CRYPTO|STOCK>')
+	elif (g_exchange ==  'TEST'): wssurl = 'wss://stream.data.alpaca.markets/v2/test'
+	else: bailmsg('EXCHANGE == <CRYPTO|STOCK|TEST>')
 
-	g_debug_python = False
+	swfr_env_var = os.getenv('WAIT_FOR_READY')
+	if swfr_env_var is not None:
+		flags = ('0', 'n', 'N', 'f', 'F')
+		if (swfr_env_var.startswith(flags)): g_wait_for_ready = False
+		if (swfr_env_var == 'off'): g_wait_for_ready = False
+		if (swfr_env_var == 'OFF'): g_wait_for_ready = False
+
+	trace_env_var = os.getenv('WEBSOCKET_TRACE')
+	if trace_env_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (trace_env_var.startswith(flags)): g_websocket_trace = True
+		if (trace_env_var == 'on'): g_websocket_trace = True
+		if (trace_env_var == 'ON'): g_websocket_trace = True
+
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
 		flags = ('1', 'y', 'Y', 't', 'T')
@@ -224,13 +256,12 @@ if __name__ == '__main__':
 
 	if redis_url is not None:
 		g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
-		key = get_symbols_set_key()
-		wait_for_ready(g_rc, key, 0.1)
-#		Acquite the list of symbols from redis
-		g_symbolset = g_rc.smembers(key)
+		if g_wait_for_ready: wait_for_ready(g_rc, 'DASHBOARD:READY', 0.1)
+#		Acquire the set of symbols from redis
+		if (g_exchange == 'STOCK'): g_symbols_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
+		if (g_exchange == 'CRYPTO'): g_symbols_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
 
-	wss_dbg_trace = False
-	websocket.enableTrace(wss_dbg_trace)
+	websocket.enableTrace(g_websocket_trace)
 	ws = websocket.WebSocketApp(wssurl,
 		on_open=on_open,
 		on_message=on_message,

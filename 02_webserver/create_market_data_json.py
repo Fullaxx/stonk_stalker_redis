@@ -13,12 +13,10 @@ from contextlib import suppress
 
 sys.path.append('.')
 sys.path.append('/app')
-from ss_cfg import get_dashboard_ready_key,get_symbols_set_key
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
 g_market_json_creation_interval = 5
-
 
 g_shutdown = False
 def signal_handler(sig, frame):
@@ -83,9 +81,10 @@ def prepare_symbol(r, symbol):
 
 def prepare_marketdb(r):
 	marketdb = {}
-	key = get_symbols_set_key()
-	symb_set = r.smembers(key)
-	for symbol in symb_set:
+	stock_set = r.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
+	crypto_set = r.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
+	symbols_set = stock_set.union(crypto_set)
+	for symbol in symbols_set:
 		marketdb[symbol] = prepare_symbol(r, symbol)
 	return marketdb
 
@@ -97,9 +96,10 @@ def dump_marketdb(r, now_dt, filename):
 
 def prepare_marketlist(r):
 	marketlist = []
-	key = get_symbols_set_key()
-	symb_set = r.smembers(key)
-	for symbol in symb_set:
+	stock_set = r.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
+	crypto_set = r.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
+	symbols_set = stock_set.union(crypto_set)
+	for symbol in symbols_set:
 		symbol_obj = prepare_symbol(r, symbol)
 		marketlist.append(symbol_obj)
 	return marketlist
@@ -137,8 +137,7 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	key = get_dashboard_ready_key()
-	wait_for_ready(r, key, 0.1)
+	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)

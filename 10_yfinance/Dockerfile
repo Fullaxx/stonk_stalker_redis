@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------
 # Pull base image
 FROM fullaxx/ss_base_image
-LABEL AUTHOR="Brett Kuskie <fullaxx@gmail.com>"
+LABEL author="Brett Kuskie <fullaxx@gmail.com>"
 
 # ------------------------------------------------------------------------------
 # Prepare the image
