@@ -5,9 +5,13 @@ LABEL author="Brett Kuskie <fullaxx@gmail.com>"
 
 # ------------------------------------------------------------------------------
 # Prepare the image
-#COPY supervisord.conf /etc/supervisor/supervisord.conf
 COPY *.py /app/
+
+# ------------------------------------------------------------------------------
+# Define healthcheck
+# HEALTHCHECK --interval=2s --timeout=5s \
+# CMD /app/healthcheck.py
+
 # ------------------------------------------------------------------------------
 # Define default command
-#CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
 CMD ["/app/publish_config.py"]

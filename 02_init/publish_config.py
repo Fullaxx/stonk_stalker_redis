@@ -106,7 +106,7 @@ if __name__ == '__main__':
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			publish_ready(r, False)
-			next = now_s + 1
+			next = now_s + 2
 		time.sleep(0.1)
 
 	r.delete('DASHBOARD:READY')
