@@ -1,4 +1,4 @@
 #!/bin/bash
 
 # docker pull fullaxx/ss_base_image
-docker build -t "fullaxx/ss_startup" .
+docker build -t "fullaxx/ss_init" .
