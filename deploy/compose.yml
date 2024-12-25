@@ -11,41 +11,55 @@ services:
     volumes:
       - /srv/docker/ssr/redis/data:/data
 
+  init:
+    image: fullaxx/ss_init
+    healthcheck:
+      test: ["CMD", "/app/healthcheck.py"]
+      interval: 2s
+      timeout: 5s
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+     - REDIS_URL=redis://172.17.0.1:6379?db=0
+    volumes:
+     - /srv/docker/ssr/config:/config
+
   webserver:
     image: fullaxx/ss_webserver
     restart: "no"
     depends_on:
-     - db
+      init:
+        condition: service_healthy
     environment:
      - REDIS_URL=redis://172.17.0.1:6379?db=0
      - JSON_FETCH_INTERVAL=3000
      - MARKET_DATA_CREATE_INTERVAL=2
     ports:
      - 172.17.0.1:7000:80
-    volumes:
-     - /srv/docker/ssr/config:/config
 
   yfinance:
     image: fullaxx/ss_yfinance
     restart: "no"
     depends_on:
-     - db
+      init:
+        condition: service_healthy
     environment:
      - REDIS_URL=redis://172.17.0.1:6379?db=0
      - YFINANCE_REQUEST_INTERVAL=15
-    volumes:
-     - /srv/docker/ssr/config:/config
 
   alpaca:
     image: fullaxx/ss_alpaca
     restart: "no"
     depends_on:
-     - db
+      init:
+        condition: service_healthy
     environment:
      - REDIS_URL=redis://172.17.0.1:6379?db=0
      - ALPACA_APIKEY=XXXXXXXXX
      - ALPACA_SECRET=XXXXXXXXX
-     - STOCK_TRADES=AAPL,AMZN,ARM,AVGO,AXON,BLK,CART,CAT,DDOG,GOOGL,META,MSFT,MU,NFLX,NVDA,ORCL,PLTR,POWL,SMCI,TSLA,TSM,VRT,VST,WMT
+     - STOCK_TRADES=AAPL,ADBE,AMZN,ARM,AVGO,AXON,BLK,CART,CAT,DDOG,GOOGL,META,MSFT,MU,NFLX,NVDA,ORCL,PLTR,POWL,SMCI,TSLA,TSM,VRT,VST,WMT
      - CRYPTO_TRADES=BTC/USD,ETH/USD,LTC/USD,DOGE/USD
-    volumes:
-     - /srv/docker/ssr/config:/config
+     - MINUTE_BARS=1
+     - DAILY_BARS=1
