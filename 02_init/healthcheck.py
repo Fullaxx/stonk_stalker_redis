@@ -37,5 +37,8 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
+#	We can be healthy after publish_config.py reports READY
 	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
+
+#	Positively Healthy
 	sys.exit(0)
