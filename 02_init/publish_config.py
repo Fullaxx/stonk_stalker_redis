@@ -7,8 +7,8 @@ import json
 import time
 import redis
 import signal
-import datetime
 
+from datetime import datetime
 from pathlib import Path
 
 sys.path.append('.')
