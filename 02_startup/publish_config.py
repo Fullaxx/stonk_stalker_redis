@@ -6,6 +6,8 @@ import sys
 import json
 import time
 import redis
+import signal
+import datetime
 
 from pathlib import Path
 
@@ -15,12 +17,21 @@ from redis_helpers import connect_to_redis
 
 g_debug_python = False
 
+g_shutdown = False
+def signal_handler(sig, frame):
+	global g_shutdown
+	g_shutdown = True
+
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
 
 def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
+
+def publish_ready(r, v):
+	r.set('DASHBOARD:READY', 'READY', ex=5)
+	if v: print(f'READY!', flush=True)
 
 def prepare_config(cfg):
 	if 'DASHBOARD_CONFIG' not in cfg:
@@ -81,8 +92,21 @@ if __name__ == '__main__':
 	os.system('/app/sort_tables.py')
 
 #	Inform others that we are ready
-	r.set('DASHBOARD:READY', 'READY', ex=10)
-	print(f'READY!', flush=True)
+	publish_ready(r, True)
 
-#	Sleep for a bit so supervisord knows all is well
-	time.sleep(3)
+#	Prepare Signals
+	signal.signal(signal.SIGINT,  signal_handler)
+	signal.signal(signal.SIGTERM, signal_handler)
+	signal.signal(signal.SIGQUIT, signal_handler)
+
+#	Wait for the slow release of death
+	next = 0
+	while not g_shutdown:
+		now_dt = datetime.utcnow()
+		now_s = int(now_dt.timestamp())
+		if (now_s >= next):
+			publish_ready(r, False)
+			next = now_s + 1
+		time.sleep(0.1)
+
+	r.delete('DASHBOARD:READY')
