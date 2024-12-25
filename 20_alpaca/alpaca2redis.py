@@ -2,7 +2,7 @@
 #
 # https://pypi.org/project/websocket-client/
 # https://websocket-client.readthedocs.io/en/latest/examples.html
-# python3 -m pip install websocket-client wsaccel rel
+# pip3 install redis websocket-client wsaccel rel
 #
 # https://alpaca.markets/learn/streaming-market-data/
 # https://docs.alpaca.markets/docs/streaming-market-data
@@ -18,7 +18,7 @@ import time
 import pytz
 import json
 import redis
-import datetime
+#import datetime
 import websocket
 
 sys.path.append('.')
@@ -28,6 +28,9 @@ from redis_helpers import connect_to_redis,wait_for_ready
 g_rc = None
 g_symbols_set = None
 g_wait_for_ready = True
+
+g_minute_bars = True
+g_daily_bars = True
 
 g_debug_python = False
 g_websocket_trace = False
@@ -39,35 +42,35 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def handle_market_message_orig(ws, obj):
-	symbol = obj['S']
-	if os.getenv('SYMBOL') is not None:
-		if (symbol != os.getenv('SYMBOL')): return
-#	field = symbol.replace('/', '_')	#	Crypto Symbol Converted
-	bar_time = obj['t']
-	zulu_dt = datetime.datetime.strptime(bar_time, '%Y-%m-%dT%H:%M:%S%z')
-	zstamp = zulu_dt.strftime('%s')
-	eastern_dt = zulu_dt.astimezone(g_etz)
-#	Stock Market datestamps should always be localized to US/eastern
-	if (g_exchange ==  'STOCK'): date_str = eastern_dt.strftime('%Y%m%d')
-	if (g_exchange == 'CRYPTO'): date_str = zulu_dt.strftime('%Y%m%d')
-
-	print(zstamp, 'Z /', zulu_dt, '/', eastern_dt, '/', date_str, symbol, flush=True)
-
-#	Make sure our bar is in proper JSON format
-	bar_str = json.dumps(obj)
-
-#	This should return 1 every time
-	key = f'{g_exchange}:RAWBARS:HMAP_1MINBARS:{date_str}:{zstamp}'
-	hupd = g_rc.hset(key, symbol, bar_str)
-
-#	Publish a message indicating an update to specified symbol
-	channel = f'{g_exchange}-RAWBARS-UPDATED'
-	message = f'{symbol}:{date_str}:{zstamp}'
-	g_rc.publish(channel, message)
-
-	if g_debug_python:
-		print(f'{key} {symbol} {bar_str}', flush=True)
+#def handle_market_message_orig(ws, obj):
+#	symbol = obj['S']
+#	if os.getenv('SYMBOL') is not None:
+#		if (symbol != os.getenv('SYMBOL')): return
+##	field = symbol.replace('/', '_')	#	Crypto Symbol Converted
+#	bar_time = obj['t']
+#	zulu_dt = datetime.datetime.strptime(bar_time, '%Y-%m-%dT%H:%M:%S%z')
+#	zstamp = zulu_dt.strftime('%s')
+#	eastern_dt = zulu_dt.astimezone(g_etz)
+##	Stock Market datestamps should always be localized to US/eastern
+#	if (g_exchange ==  'STOCK'): date_str = eastern_dt.strftime('%Y%m%d')
+#	if (g_exchange == 'CRYPTO'): date_str = zulu_dt.strftime('%Y%m%d')
+#
+#	print(zstamp, 'Z /', zulu_dt, '/', eastern_dt, '/', date_str, symbol, flush=True)
+#
+##	Make sure our bar is in proper JSON format
+#	bar_str = json.dumps(obj)
+#
+##	This should return 1 every time
+#	key = f'{g_exchange}:RAWBARS:HMAP_1MINBARS:{date_str}:{zstamp}'
+#	hupd = g_rc.hset(key, symbol, bar_str)
+#
+##	Publish a message indicating an update to specified symbol
+#	channel = f'{g_exchange}-RAWBARS-UPDATED'
+#	message = f'{symbol}:{date_str}:{zstamp}'
+#	g_rc.publish(channel, message)
+#
+#	if g_debug_python:
+#		print(f'{key} {symbol} {bar_str}', flush=True)
 
 def publish_message(symbol, key):
 #	Publish a message indicating an update to specified symbol
@@ -150,20 +153,25 @@ def handle_market_message(ws, obj):
 	elif (msg_type == 'u'): handle_market_message_updatedbars(ws, obj)
 	else: print(obj, flush=True)
 
-#	symbols_str = 'BLK,AAPL,MSFT,GOOGL,META,AMZN,NVDA,AVGO,MU,PLTR,SMCI,VRT,WMT,TSLA'
-#	symbols_str = 'BTC/USD,ETH/USD,LTC/USD,DOGE/USD'
+# symbols_str = 'BLK,AAPL,MSFT,GOOGL,META,AMZN,NVDA,AVGO,MU,PLTR,SMCI,VRT,WMT,TSLA'
+# symbols_str = 'BTC/USD,ETH/USD,LTC/USD,DOGE/USD'
 def create_alpaca_live_sub_msg():
 	subact = {'action':'subscribe'}
 	if (g_exchange ==  'STOCK'): symbols_str = os.getenv('STOCK_TRADES')
 	if (g_exchange == 'CRYPTO'): symbols_str = os.getenv('CRYPTO_TRADES')
 	if symbols_str is not None:
 		list_of_symbols = symbols_str.split(',')
+		symbol_count = len(list_of_symbols)
+		print(f'Subscribing to all trades of {symbol_count} symbols!', flush=True)
 		subact['trades'] = list_of_symbols
-#	subact['orderbooks']  = list_of_symbols
-#	subact['quotes']      = list_of_symbols
-	subact['bars']        = ['*']
-	subact['updatedBars'] = ['*']
-	subact['dailyBars']   = ['*']
+#		subact['orderbooks'] = list_of_symbols
+#		subact['quotes'] = list_of_symbols
+	if g_minute_bars:
+		subact['bars'] = ['*']
+	if g_minute_bars:
+		subact['updatedBars'] = ['*']
+	if g_daily_bars:
+		subact['dailyBars'] = ['*']
 	sub_str = json.dumps(subact)
 	return sub_str
 
@@ -225,7 +233,7 @@ def on_open(ws):
 	print('Connection: Opened', flush=True)
 
 def acquire_environment():
-	global g_etz, g_apikey, g_secret, g_exchange, g_wait_for_ready, g_debug_python
+	global g_etz, g_apikey, g_secret, g_exchange, g_minute_bars, g_daily_bars, g_wait_for_ready, g_debug_python
 
 	g_etz = pytz.timezone('US/Eastern')
 
@@ -244,6 +252,20 @@ def acquire_environment():
 	elif (g_exchange == 'STOCK'): wssurl = 'wss://stream.data.alpaca.markets/v2/iex'
 	elif (g_exchange ==  'TEST'): wssurl = 'wss://stream.data.alpaca.markets/v2/test'
 	else: bailmsg('EXCHANGE == <CRYPTO|STOCK|TEST>')
+
+	mb_env_var = os.getenv('MINUTE_BARS')
+	if mb_env_var is not None:
+		flags = ('0', 'n', 'N', 'f', 'F')
+		if (mb_env_var.startswith(flags)): g_minute_bars = False
+		if (mb_env_var == 'off'): g_minute_bars = False
+		if (mb_env_var == 'OFF'): g_minute_bars = False
+
+	db_env_var = os.getenv('DAILY_BARS')
+	if db_env_var is not None:
+		flags = ('0', 'n', 'N', 'f', 'F')
+		if (db_env_var.startswith(flags)): g_daily_bars = False
+		if (db_env_var == 'off'): g_daily_bars = False
+		if (db_env_var == 'OFF'): g_daily_bars = False
 
 	swfr_env_var = os.getenv('WAIT_FOR_READY')
 	if swfr_env_var is not None:
