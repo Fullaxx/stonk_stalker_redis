@@ -7,3 +7,6 @@ fi
 
 SYMBOL="$1"
 docker-compose exec -it yfinance /app/ticker2redis.py -s ${SYMBOL}
+
+docker-compose down
+docker-compose up -d
