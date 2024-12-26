@@ -83,7 +83,10 @@ def prepare_marketdb(r):
 	marketdb = {}
 	stock_set = r.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_set = r.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	symbols_set = stock_set.union(crypto_set)
+	index_set = r.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_set = r.smembers('DASHBOARD:SYMBOLS_SET:ETF')
+	future_set = r.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
+	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
 	for symbol in symbols_set:
 		marketdb[symbol] = prepare_symbol(r, symbol)
 	return marketdb
@@ -98,7 +101,10 @@ def prepare_marketlist(r):
 	marketlist = []
 	stock_set = r.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_set = r.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	symbols_set = stock_set.union(crypto_set)
+	index_set = r.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_set = r.smembers('DASHBOARD:SYMBOLS_SET:ETF')
+	future_set = r.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
+	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
 	for symbol in symbols_set:
 		symbol_obj = prepare_symbol(r, symbol)
 		marketlist.append(symbol_obj)

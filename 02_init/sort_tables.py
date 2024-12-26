@@ -21,18 +21,6 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def save_symbols(r, table_type, symbols_str):
-	if (table_type == 'crypto'):
-		key = 'DASHBOARD:SYMBOLS_SET:CRYPTO'
-	elif (table_type == 'stock'):
-		key = 'DASHBOARD:SYMBOLS_SET:STOCKS'
-	else:
-		bailmsg('table_type must be stock or crypto!')
-
-	symbols_list = symbols_str.split(',')
-	num_updated = r.sadd(key, *symbols_list)
-	print(f'{key} {symbols_list}: {num_updated}', flush=True)
-
 def get_mcap_value_yf(symbol):
 	retval = 0
 	symbol = symbol.replace('/','-')
@@ -84,6 +72,26 @@ def sort_table_by_mcap_and_save(r, table_name, symbols_str):
 	key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
 	r.set(key, sorted_str)
 
+def save_index_table(r, table_name, symbols_str):
+	print(f'{table_name:<12} {symbols_str}')
+	key = f'DASHBOARD:TABLES:INDEX:{table_name}'
+	r.set(key, symbols_str)
+
+def save_future_table(r, table_name, symbols_str):
+	print(f'{table_name:<12} {symbols_str}')
+	key = f'DASHBOARD:TABLES:FUTURE:{table_name}'
+	r.set(key, symbols_str)
+
+def save_etf_table(r, table_name, symbols_str):
+	print(f'{table_name:<12} {symbols_str}')
+	key = f'DASHBOARD:TABLES:ETF:{table_name}'
+	r.set(key, symbols_str)
+
+def save_symbols(r, table_type, key, symbols_str):
+	symbols_list = symbols_str.split(',')
+	num_updated = r.sadd(key, *symbols_list)
+	print(f'{key} {symbols_list}: {num_updated}', flush=True)
+
 def process_table(r, k, v):
 #	Default True, later read this from config
 	sort_tables_by_mcap = True
@@ -91,9 +99,29 @@ def process_table(r, k, v):
 	table_name = v['TABLENAME']
 	table_type = v['TABLETYPE']
 	symbols_str = v['SYMBOLS']
-	save_symbols(r, table_type, symbols_str)
-	if sort_tables_by_mcap:
-		sort_table_by_mcap_and_save(r, table_name, symbols_str)
+
+	if (table_type == 'index'):
+		set_key = 'DASHBOARD:SYMBOLS_SET:INDEX'
+		save_index_table(r, table_name, symbols_str)
+	if (table_type == 'future'):
+		set_key = 'DASHBOARD:SYMBOLS_SET:FUTURE'
+		save_future_table(r, table_name, symbols_str)
+	if (table_type == 'etf'):
+		set_key = 'DASHBOARD:SYMBOLS_SET:ETF'
+		save_etf_table(r, table_name, symbols_str)
+	if (table_type == 'crypto'):
+		set_key = 'DASHBOARD:SYMBOLS_SET:CRYPTO'
+		if sort_tables_by_mcap:
+			sort_table_by_mcap_and_save(r, table_name, symbols_str)
+	if (table_type == 'stock'):
+		set_key = 'DASHBOARD:SYMBOLS_SET:STOCKS'
+		if sort_tables_by_mcap:
+			sort_table_by_mcap_and_save(r, table_name, symbols_str)
+
+	if set_key is None:
+		bailmsg('table_type must be index/etf/future/stock/crypto!')
+
+	save_symbols(r, table_type, set_key, symbols_str)
 
 def acquire_environment():
 	global g_debug_python

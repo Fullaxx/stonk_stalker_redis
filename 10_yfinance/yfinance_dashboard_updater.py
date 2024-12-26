@@ -117,14 +117,59 @@ def yfinance_handle_new_crypto_info(r, key, symbol):
 		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 
+def yfinance_handle_new_index_info(r, key, symbol):
+	val = r.get(key)
+	info = json.loads(val)
+	if 'bid' in info:
+		val = info['bid']
+		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+	if 'previousClose' in info:
+		val = info['previousClose']
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+
+def yfinance_handle_new_future_info(r, key, symbol):
+	val = r.get(key)
+	info = json.loads(val)
+	if 'bid' in info:
+		val = info['bid']
+		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+	if 'previousClose' in info:
+		val = info['previousClose']
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+
+def yfinance_handle_new_etf_info(r, key, symbol):
+	val = r.get(key)
+	info = json.loads(val)
+	if 'navPrice' in info:
+		val = info['navPrice']
+		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+	if 'previousClose' in info:
+		val = info['previousClose']
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:CALENDAR:STOCK:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:CRYPTO:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:STOCK:{symbol}'}
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:INDEX:{symbol}'}
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:FUTURE:{symbol}'}
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:ETF:{symbol}'}
 def handle_channel_message(r, p, msg_obj):
 #	print(msg_obj['channel'])
 	key = msg_obj['data']
 	symbol = key.split(':')[3]
+	if key.startswith('YFINANCE:INFO:ETF:'):
+		yfinance_handle_new_etf_info(r, key, symbol)
+	if key.startswith('YFINANCE:INFO:FUTURE:'):
+		yfinance_handle_new_future_info(r, key, symbol)
+	if key.startswith('YFINANCE:INFO:INDEX:'):
+		yfinance_handle_new_index_info(r, key, symbol)
 	if key.startswith('YFINANCE:INFO:CRYPTO:'):
 		yfinance_handle_new_crypto_info(r, key, symbol)
 	if key.startswith('YFINANCE:INFO:STOCK:'):
