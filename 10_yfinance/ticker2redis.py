@@ -75,15 +75,55 @@ def save_stock_calendar(r, symbol, calendar):
 		eprint(f'SET {key:<28} FAILED!')
 #	print(edates_str)
 
+def save_index_info(r, symbol, info):
+	bid = info['bid'] if 'bid' in info else 0
+	info_str = json.dumps(info)
+	key = f'YFINANCE:INFO:INDEX:{symbol}'
+	result = r.set(key, info_str)
+	if result:
+		print(f'SET {key:<28} ${bid}')
+		publish_message(r, symbol, key)
+	else:
+		eprint(f'SET {key:<28} FAILED!')
+
+def save_future_info(r, symbol, info):
+	bid = info['bid'] if 'bid' in info else 0
+	info_str = json.dumps(info)
+	key = f'YFINANCE:INFO:FUTURE:{symbol}'
+	result = r.set(key, info_str)
+	if result:
+		print(f'SET {key:<28} ${bid}')
+		publish_message(r, symbol, key)
+	else:
+		eprint(f'SET {key:<28} FAILED!')
+
+def save_etf_info(r, symbol, info):
+	navPrice = info['navPrice'] if 'navPrice' in info else 0
+	info_str = json.dumps(info)
+	key = f'YFINANCE:INFO:ETF:{symbol}'
+	result = r.set(key, info_str)
+	if result:
+		print(f'SET {key:<28} ${navPrice}')
+		publish_message(r, symbol, key)
+	else:
+		eprint(f'SET {key:<28} FAILED!')
+
+# res.info['quoteType'] == INDEX|FUTURE|ETF|EQUITY|CRYPTOCURRENCY
 def process_yfinance_response(r, symbol, res):
 	info = res.info
 	if info is None:
 		eprint(f'{symbol} has no info!')
 		return
 
+	if res.info['quoteType'] == 'ETF':
+		save_etf_info(r, symbol, info)
+	if res.info['quoteType'] == 'FUTURE':
+		save_future_info(r, symbol, info)
+	if res.info['quoteType'] == 'INDEX':
+		save_index_info(r, symbol, info)
 	if res.info['quoteType'] == 'CRYPTOCURRENCY':
 		save_crypto_info(r, symbol, info)
-	else:
+	if res.info['quoteType'] == 'EQUITY':
 		save_stock_info(r, symbol, info)
 		save_stock_calendar(r, symbol, res.calendar)
 

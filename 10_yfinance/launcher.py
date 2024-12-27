@@ -63,7 +63,10 @@ if __name__ == '__main__':
 #	Acquire the set of symbols from redis
 	stock_set = r.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_set = r.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	symbols_set = stock_set.union(crypto_set)
+	index_set = r.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_set = r.smembers('DASHBOARD:SYMBOLS_SET:ETF')
+	future_set = r.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
+	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)

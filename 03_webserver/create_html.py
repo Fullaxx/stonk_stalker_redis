@@ -58,13 +58,14 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 		html += f'<td id={fsymb}_previousClose></td>'
 	html += '</tr>'
 
-	if dc['DISPLAY_MARKET_CAP']:
-		html += '<tr>'
-		html += '<td>MCap</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_mcap></td>'
-		html += '</tr>'
+	if (table_type == 'stock') or (table_type == 'crypto'):
+		if dc['DISPLAY_MARKET_CAP']:
+			html += '<tr>'
+			html += '<td>MCap</td>'
+			for symb in symbols_list:
+				fsymb = symb.replace('/','-')
+				html += f'<td id={fsymb}_mcap></td>'
+			html += '</tr>'
 
 	if (table_type == 'stock'):
 		if dc['DISPLAY_FPE_RATIO']:
@@ -146,11 +147,17 @@ def gen_html_head(cfg):
 	html += '</head>'
 	return html
 
-def gen_html_body(r, cfg):
-#	Get total count of symbols we are tracking
+def get_total_symbols(r):
 	stocks_count = r.scard('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_count = r.scard('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	symbols_count = int(stocks_count) + int(crypto_count)
+	index_count = r.scard('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_count = r.scard('DASHBOARD:SYMBOLS_SET:ETF')
+	future_count = r.scard('DASHBOARD:SYMBOLS_SET:FUTURE')
+	return int(stocks_count) + int(crypto_count) + int(index_count) + int(etf_count) + int(future_count)
+
+def gen_html_body(r, cfg):
+#	Get total count of symbols we are tracking
+	symbols_count = get_total_symbols(r)
 
 	html = '<body>'
 	html += '<center>'
@@ -162,7 +169,16 @@ def gen_html_body(r, cfg):
 		if k.startswith('TABLE_'):
 			table_name = v['TABLENAME']
 			table_type = v['TABLETYPE']
-			key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
+			if (table_type == 'index'):
+				key = f'DASHBOARD:TABLES:INDEX:{table_name}'
+			if (table_type == 'etf'):
+				key = f'DASHBOARD:TABLES:ETF:{table_name}'
+			if (table_type == 'future'):
+				key = f'DASHBOARD:TABLES:FUTURE:{table_name}'
+			if (table_type == 'crypto'):
+				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
+			if (table_type == 'stock'):
+				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
 			symbols_str = r.get(key)
 			html += gen_html_table(k, table_name, table_type, symbols_str, dash_config)
 	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
