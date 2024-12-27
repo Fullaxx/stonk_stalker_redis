@@ -38,8 +38,6 @@ services:
         condition: service_healthy
     environment:
      - REDIS_URL=redis://172.17.0.1:6379?db=0
-     - JSON_FETCH_INTERVAL=3000
-     - MARKET_DATA_CREATE_INTERVAL=2
     ports:
      - 172.17.0.1:7000:80
 

@@ -16,7 +16,6 @@ sys.path.append('/app')
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
-g_market_json_creation_interval = 5
 
 g_shutdown = False
 def signal_handler(sig, frame):
@@ -116,8 +115,22 @@ def dump_marketlist(r, now_dt, filename):
 	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
 
+def load_market_json_creation_interval(r):
+#	Load MARKET_DATA_CREATE_INTERVAL from config
+	retval = 5
+	cfg_str = r.get('DASHBOARD:CONFIG')
+	ss_config = json.loads(cfg_str)
+	dash_config = ss_config['DASHBOARD_CONFIG']
+	if 'MARKET_DATA_CREATE_INTERVAL' in dash_config:
+		interval = dash_config['MARKET_DATA_CREATE_INTERVAL']
+		if (type(interval) == int):
+			if (interval > 0):
+				print(f'Will update market data every {interval} seconds', flush=True)
+				retval = interval
+	return retval
+
 def acquire_environment():
-	global g_market_json_creation_interval, g_debug_python
+	global g_debug_python
 
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
@@ -126,9 +139,6 @@ def acquire_environment():
 
 	redis_url = os.getenv('REDIS_URL')
 	if redis_url is None: bailmsg('Set REDIS_URL')
-
-	env_val = os.getenv('MARKET_DATA_CREATE_INTERVAL')
-	if env_val is not None: g_market_json_creation_interval = int(env_val)
 
 	debug_env_var = os.getenv('DEBUG_PYTHON')
 	if debug_env_var is not None:
@@ -144,6 +154,7 @@ if __name__ == '__main__':
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
+	market_json_creation_interval = load_market_json_creation_interval(r)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
@@ -156,5 +167,5 @@ if __name__ == '__main__':
 		if (now_s >= next):
 			dump_marketdb(r, now_dt, f'marketdb.json')
 			dump_marketlist(r, now_dt, f'marketlist.json')
-			next = now_s + g_market_json_creation_interval
+			next = now_s + market_json_creation_interval
 		time.sleep(0.1)

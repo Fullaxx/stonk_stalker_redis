@@ -36,6 +36,9 @@ def publish_ready(r, v):
 def prepare_config(cfg):
 	if 'DASHBOARD_CONFIG' not in cfg:
 		cfg['DASHBOARD_CONFIG'] = {
+			'THEME' : 'light',
+			'MARKET_DATA_CREATE_INTERVAL' : 5,
+			'JSON_FETCH_INTERVAL' : 4000,
 			'DISPLAY_MARKET_CAP' : False,
 			'DISPLAY_FPE_RATIO' : False,
 			'DISPLAY_PST12_RATIO' : False,
