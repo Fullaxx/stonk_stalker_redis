@@ -3,6 +3,7 @@
 		"THEME"                       : "light",
 		"MARKET_DATA_CREATE_INTERVAL" : 2,
 		"JSON_FETCH_INTERVAL"         : 4000,
+		"DISPLAY_MINI_CALENDAR"       : true,
 		"DISPLAY_MARKET_CAP"          : true,
 		"DISPLAY_FPE_RATIO"           : true,
 		"DISPLAY_PST12_RATIO"         : false,

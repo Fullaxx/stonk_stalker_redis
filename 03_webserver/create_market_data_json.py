@@ -115,19 +115,14 @@ def dump_marketlist(r, now_dt, filename):
 	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
 
-def load_market_json_creation_interval(r):
 #	Load MARKET_DATA_CREATE_INTERVAL from config
-	retval = 5
+def load_market_json_creation_interval(r):
 	cfg_str = r.get('DASHBOARD:CONFIG')
 	ss_config = json.loads(cfg_str)
 	dash_config = ss_config['DASHBOARD_CONFIG']
-	if 'MARKET_DATA_CREATE_INTERVAL' in dash_config:
-		interval = dash_config['MARKET_DATA_CREATE_INTERVAL']
-		if (type(interval) == int):
-			if (interval > 0):
-				print(f'Will update market data every {interval} seconds', flush=True)
-				retval = interval
-	return retval
+	interval = dash_config['MARKET_DATA_CREATE_INTERVAL']
+	print(f'Will update market data every {interval} seconds', flush=True)
+	return interval
 
 def acquire_environment():
 	global g_debug_python
