@@ -25,6 +25,31 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
+def create_mini_cal():
+	green_months_list = ['Jan', 'Jul']
+	red_months_list = ['Apr', 'Jun', 'Sep', 'Oct', 'Dec']
+	months_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+	html = ''
+	html += '<h3><div id=minical>'
+	html += '<table>'
+	html += f'<tr><th colspan=12 id=time>Mini Calendar</th></tr>'
+
+	html += '<tr>'
+	for month in months_list:
+		if month in red_months_list:
+			html += f'<td class=redmonth>{month}</td>'
+		elif month in green_months_list:
+			html += f'<td class=greenmonth>{month}</td>'
+		else:
+			html += f'<td>{month}</td>'
+	html += '</tr>'
+
+	html += '</table>'
+	html += '</div></h3>'
+	html += '<hr>'
+	return html
+
 def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	symbols_list = symbols_str.split(',')
 
@@ -122,20 +147,13 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	return html
 
 def gen_html_head(cfg):
-	dark_theme = False
-	json_fetch_interval = 5000
-
 	dash_config = cfg['DASHBOARD_CONFIG']
-	if 'THEME' in dash_config:
-		if (dash_config['THEME'] == 'dark'): dark_theme = True
-	if 'JSON_FETCH_INTERVAL' in dash_config:
-		interval = dash_config['JSON_FETCH_INTERVAL']
-		if (type(interval) == int):
-			if (interval > 0): json_fetch_interval = interval
+	json_fetch_interval = dash_config['JSON_FETCH_INTERVAL']
+	dashboard_theme = dash_config['THEME']
 
 	html = '<head>'
 	html += '<title>Stonk Stalker</title>'
-	if dark_theme:
+	if (dashboard_theme == 'dark'):
 		html += '<link rel="stylesheet" href="static/dashboard-dark.css">'
 	else:
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
@@ -162,9 +180,13 @@ def gen_html_body(r, cfg):
 	html = '<body>'
 	html += '<center>'
 	html += f'<h2>Stonk Stalker ({symbols_count} Symbols)</h2>'
-	html += '<h3><div id="time"></div></h3>'
 
-	dash_config = cfg['DASHBOARD_CONFIG']
+	dc = cfg['DASHBOARD_CONFIG']
+	if dc['DISPLAY_MINI_CALENDAR']:
+		html += create_mini_cal()
+	else:
+		html += '<h3><div id=time></div></h3>'
+
 	for k,v in cfg.items():
 		if k.startswith('TABLE_'):
 			table_name = v['TABLENAME']
@@ -180,7 +202,8 @@ def gen_html_body(r, cfg):
 			if (table_type == 'stock'):
 				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
 			symbols_str = r.get(key)
-			html += gen_html_table(k, table_name, table_type, symbols_str, dash_config)
+			html += gen_html_table(k, table_name, table_type, symbols_str, dc)
+
 	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
 	html += '</center>'
 	html += '</body>'

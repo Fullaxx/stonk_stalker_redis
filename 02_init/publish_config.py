@@ -33,21 +33,48 @@ def publish_ready(r, v):
 	r.set('DASHBOARD:READY', 'READY', ex=5)
 	if v: print(f'READY!', flush=True)
 
-def prepare_config(cfg):
-	if 'DASHBOARD_CONFIG' not in cfg:
-		cfg['DASHBOARD_CONFIG'] = {
-			'THEME' : 'light',
-			'MARKET_DATA_CREATE_INTERVAL' : 5,
-			'JSON_FETCH_INTERVAL' : 4000,
-			'DISPLAY_MARKET_CAP' : False,
-			'DISPLAY_FPE_RATIO' : False,
-			'DISPLAY_PST12_RATIO' : False,
-			'DISPLAY_PEG_RATIO' : False,
-			'DISPLAY_PB_RATIO' : False,
-			'DISPLAY_OTHER_URLS' : False,
-		}
+def check_dc_str_value(dc, key, default):
+	if key not in dc:
+		dc[key] = default
+	else:
+		if (type(dc[key]) != str):
+			bailmsg(f'key must be type str')
 
-	return cfg
+def check_dc_int_value(dc, key, default):
+	if key not in dc:
+		dc[key] = default
+	else:
+		if (type(dc[key]) != int):
+			bailmsg(f'key must be type int')
+
+def check_dc_bool_value(dc, key, default):
+	if key not in dc:
+		dc[key] = default
+	else:
+		if (type(dc[key]) != bool):
+			bailmsg(f'key must be type bool')
+
+# Set defaults for DASHBOARD_CONFIG
+def check_dc(dc):
+	check_dc_str_value(dc, 'THEME', 'light')
+
+	check_dc_int_value(dc, 'MARKET_DATA_CREATE_INTERVAL', 1)
+	check_dc_int_value(dc, 'JSON_FETCH_INTERVAL', 2000)
+
+	check_dc_bool_value(dc, 'DISPLAY_MINI_CALENDAR', False)
+	check_dc_bool_value(dc, 'DISPLAY_MARKET_CAP', False)
+	check_dc_bool_value(dc, 'DISPLAY_FPE_RATIO', False)
+	check_dc_bool_value(dc, 'DISPLAY_PST12_RATIO', False)
+	check_dc_bool_value(dc, 'DISPLAY_PEG_RATIO', False)
+	check_dc_bool_value(dc, 'DISPLAY_PB_RATIO', False)
+	check_dc_bool_value(dc, 'DISPLAY_DTR', False)
+	check_dc_bool_value(dc, 'DISPLAY_OTHER_URLS', False)
+
+#	Check the sanity of the JSON config file
+def check_config(cfg):
+	if 'DASHBOARD_CONFIG' not in cfg:
+		cfg['DASHBOARD_CONFIG'] = {}
+	check_dc(cfg['DASHBOARD_CONFIG'])
 
 def read_config():
 	cfg_dir = Path('/config')
@@ -84,11 +111,11 @@ if __name__ == '__main__':
 
 #	Prepare Config
 	ss_config = read_config()
-	prepared_config = prepare_config(ss_config)
+	check_config(ss_config)
 
 #	Publish Config
 	key = 'DASHBOARD:CONFIG'
-	cfg_str = json.dumps(prepared_config)
+	cfg_str = json.dumps(ss_config)
 	r.set(key, cfg_str)
 
 #	Sort Tables
