@@ -8,8 +8,13 @@ import pytz
 import json
 import redis
 import signal
-import datetime
 import requests
+
+from datetime import datetime
+
+sys.path.append('.')
+sys.path.append('/app')
+from redis_helpers import connect_to_redis
 
 usleep = lambda x: time.sleep(x/1000000.0)
 
@@ -49,7 +54,7 @@ def check_market_status():
 	try:
 		response = requests.get(clock_url, headers=headers)
 	except Exception as e:
-		now_z = datetime.datetime.utcnow()
+		now_z = datetime.utcnow()
 		now_et = now_z.astimezone(g_etz)
 		timestamp = now_et.strftime('%y%m%d-%H%M%S')
 		eprint(timestamp, e)
@@ -65,14 +70,6 @@ def every_30min(r):
 	json_resp = check_market_status()
 	if (json_resp is not None):
 		set_market_status(r, json_resp)
-
-def connect_to_redis(redis_url):
-	if g_debug_python: print(f'REDIS_URL: {redis_url}', flush=True)
-	r = redis.Redis.from_url(redis_url, decode_responses=True)
-	connected = r.ping()
-	if not connected: bailmsg('r.ping() failed!')
-	print(f'Connected to redis @ {redis_url}', flush=True)
-	return r
 
 def acquire_environment():
 	global g_alpaca_apikey, g_alpaca_secret, g_debug_python
@@ -96,7 +93,7 @@ def acquire_environment():
 
 if __name__ == '__main__':
 	redis_url = acquire_environment()
-	r = connect_to_redis(redis_url)
+	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
@@ -106,11 +103,10 @@ if __name__ == '__main__':
 
 	last_trigger = 0
 	while not g_shutdown:
-		now_z = datetime.datetime.utcnow().timestamp()
+		now_z = datetime.utcnow().timestamp()
 		now_sec = int(now_z)
 		if ((now_sec % (30*60)) == 0):
 			if (now_sec > last_trigger):
 				every_30min(r)
 				last_trigger = now_sec
-
 		usleep(1000)
