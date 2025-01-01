@@ -33,7 +33,8 @@ def create_mini_cal():
 	html = ''
 	html += '<h3><div id=minical>'
 	html += '<table>'
-	html += f'<tr><th colspan=12 id=time>Mini Calendar</th></tr>'
+	html += f'<tr><th colspan=12 id=marketclock>MARKETCLOCK</th></tr>'
+	html += f'<tr><th colspan=12 id=marketstatus>MARKETSTATUSINIT</th></tr>'
 
 	html += '<tr>'
 	for month in months_list:
@@ -158,9 +159,10 @@ def gen_html_head(cfg):
 	else:
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
 	html += '<script src="static/jquery-3.7.1.min.js"></script>'
-	html += '<script src="static/wall_clock.js"></script>'
+	html += '<script src="static/market_clock.js"></script>'
 	html += '<script src="static/market_data.js"></script>'
-	html += '<script>$(document).ready(function(){ time_init(); });</script>'
+	html += '<script>$(document).ready(function(){ market_clock_init(); });</script>'
+	html += '<script>$(document).ready(function(){ market_status_init(); });</script>'
 	html += '<script>$(document).ready(function(){ market_data_init(' + str(json_fetch_interval) + '); });</script>'
 	html += '</head>'
 	return html
