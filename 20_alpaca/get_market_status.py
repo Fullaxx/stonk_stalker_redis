@@ -49,8 +49,8 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	market_status = r.get('MARKET:STATUS')
-	print(f'Stock Market is {market_status}')
+	market_status_str = r.get('MARKET:STATUS')
+	print(f'Stock Market is {market_status_str}')
 
 	market_clock_str = r.get('MARKET:CLOCK')
 	market_clock = json.loads(market_clock_str)
