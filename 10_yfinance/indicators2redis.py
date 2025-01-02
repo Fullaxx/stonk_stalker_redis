@@ -7,22 +7,21 @@ import csv
 import json
 import time
 import redis
-import shutil
+#import shutil
 import pandas as pd
 import pandas_ta as ta
 import yfinance as yf
 
 #from pprint import pprint
 #from pytz import timezone
+#from contextlib import suppress
 from datetime import datetime,date
-from contextlib import suppress
-#from argparse import ArgumentParser
+from argparse import ArgumentParser
 
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
 
-g_datadir = '/data'
 g_debug_python = False
 
 def eprint(*args, **kwargs):
@@ -43,6 +42,7 @@ def publish_message(r, symbol, key):
 def publish_macro_dict(r, yf_symbol, macro):
 	symbol = yf_symbol.replace('-','/')
 	macro['SYMBOL'] = yf_symbol
+#	Assume TZ=US/Eastern
 	macro['DATE'] = f'{date.today()}'
 	json_str = json.dumps(macro)
 	print(symbol, json_str)
@@ -143,7 +143,7 @@ def gen_daily_csv(df, yf_symbol):
 	df.ta.strategy(DailyStrategy)
 	df = rename_strategy_columns(df)
 	df = df.round(decimals=2)
-	csv_filename = f'{g_datadir}/{yf_symbol}.1d.csv'
+	csv_filename = f'{yf_symbol}.1d.csv'
 	df.to_csv(csv_filename, index=True, sep=',', encoding='utf-8')
 	return csv_filename
 
@@ -164,7 +164,7 @@ def gen_daily_indicators(pickle_filename, yf_symbol_list, r):
 	return macro_dict
 
 def download_pickle(r, table_name, symbols_list):
-	pickle_filename = f'{g_datadir}/{table_name}.1d.pickle'
+	pickle_filename = f'{table_name}.1d.pickle'
 	yfdata = yf.download(symbols_list, period='1y', interval='1d', group_by='ticker', progress=False)
 	yfdata.to_pickle(pickle_filename)
 	return pickle_filename
@@ -203,22 +203,22 @@ def acquire_environment():
 	return redis_url
 
 if __name__ == '__main__':
-#	parser = ArgumentParser()
+	parser = ArgumentParser()
+#	parser.add_argument('--table_name', '-t', type=str, required=True)
 #	parser.add_argument('--symbol', '-s', type=str, required=True)
-#	args = parser.parse_args()
+	parser.add_argument('--key', '-k', type=str, required=True)
+	parser.add_argument('--dir', '-d', type=str, required=True)
+	args = parser.parse_args()
 
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	with suppress(FileExistsError): os.mkdir(g_datadir)
+	os.chdir(args.dir)
 
-	searchpattern = f'DASHBOARD:TABLES:SORTED:MCAP:*'
-	for key in sorted(r.scan_iter(searchpattern)):
-		val = r.get(key)
-		table_name = key.split(':')[4]
-		table_name_formatted = table_name.replace('/','-')
-		process_table(table_name_formatted, val)
-		time.sleep(20)
+	key = args.key
+	val = r.get(key)
+	if val is None: bailmsg(f'{key} returned None!')
 
-	if not g_debug_python:
-		shutil.rmtree(g_datadir)
+	table_name = key.split(':')[4]
+	table_name_formatted = table_name.replace('/','-')
+	process_table(table_name_formatted, val)
