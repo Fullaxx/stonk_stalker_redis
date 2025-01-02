@@ -12,9 +12,6 @@ import pandas as pd
 import pandas_ta as ta
 import yfinance as yf
 
-#from pprint import pprint
-#from pytz import timezone
-#from contextlib import suppress
 from datetime import datetime,date
 from argparse import ArgumentParser
 
