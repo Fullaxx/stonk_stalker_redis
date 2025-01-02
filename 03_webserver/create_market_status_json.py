@@ -4,18 +4,18 @@
 import os
 import sys
 import json
-import time
 import redis
 import signal
+import datetime
 
-from datetime import datetime
 from contextlib import suppress
+
+import time
+usleep = lambda x: time.sleep(x/1000000.0)
 
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis,wait_for_ready
-
-usleep = lambda x: time.sleep(x/1000000.0)
 
 g_debug_python = False
 
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
 	next = 0
 	while not g_shutdown:
-		now_dt = datetime.utcnow()
+		now_dt = datetime.datetime.now(datetime.timezone.utc)
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			dump_market_status(r, now_dt, f'market_status.json')

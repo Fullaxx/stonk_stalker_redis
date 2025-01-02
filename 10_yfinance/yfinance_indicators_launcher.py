@@ -5,16 +5,15 @@
 import os
 import sys
 import time
-import pytz
 import redis
 import shutil
 import signal
 import datetime
 import tempfile
 
-from pytz import timezone
-g_tz_utc = timezone('UTC')
-g_tz_et = timezone('US/Eastern')
+import pytz
+g_tz_utc = pytz.UTC
+g_tz_et = pytz.timezone('US/Eastern')
 
 sys.path.append('.')
 sys.path.append('/app')

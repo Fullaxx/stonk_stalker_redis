@@ -4,17 +4,17 @@ import os
 import sys
 import zmq
 import json
-import time
 import redis
 import signal
 #import traceback
 #from pprint import pprint
 
+import time
+usleep = lambda x: time.sleep(x/1000000.0)
+
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
-
-usleep = lambda x: time.sleep(x/1000000.0)
 
 g_debug_python = False
 

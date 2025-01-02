@@ -2,11 +2,9 @@
 
 import os
 import sys
-import pytz
 import json
 import redis
-
-from datetime import datetime
+import datetime
 
 sys.path.append('.')
 sys.path.append('/app')
@@ -22,11 +20,12 @@ def bailmsg(*args, **kwargs):
 	sys.exit(1)
 
 def calc_next(next):
-	now_z = datetime.utcnow()
-	next_et = datetime.strptime(next, '%Y-%m-%dT%H:%M:%S%z')
-	next_z = next_et.astimezone(pytz.UTC)
-	next_ts = next_z.timestamp()
-	diff = next_ts - now_z.timestamp()
+	now_z = datetime.datetime.now(datetime.timezone.utc)
+	next_et = datetime.datetime.strptime(next, '%Y-%m-%dT%H:%M:%S%z')
+	next_z = next_et.astimezone(datetime.timezone.utc)
+#	timestamp() returns a float
+	diff = next_z.timestamp() - now_z.timestamp()
+#	Typecast to an int to truncate fractional value
 	diff_int = int(diff)
 	return next_et,diff_int
 

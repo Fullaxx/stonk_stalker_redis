@@ -10,12 +10,17 @@
 
 import os
 import sys
-import time
 import json
-#import pytz
 import redis
 import signal
 import datetime
+
+import pytz
+#g_tz_utc = pytz.UTC
+g_tz_et = pytz.timezone('US/Eastern')
+
+import time
+usleep = lambda x: time.sleep(x/1000000.0)
 
 sys.path.append('.')
 sys.path.append('/app')
@@ -23,8 +28,6 @@ from redis_helpers import connect_to_redis
 
 g_shutdown = False
 g_debug_python = False
-
-usleep = lambda x: time.sleep(x/1000000.0)
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -62,11 +65,12 @@ def yfinance_handle_new_stock_calendar(r, key, symbol):
 	dtr_str = ''
 	val = r.get(key)
 	edates_list = json.loads(val)
-	now = datetime.date.today()
+	now_et_str = datetime.datetime.now(g_tz_et).strftime('%Y-%m-%d')
+	now_date = datetime.date.fromisoformat(now_et_str)
 	for i,d in enumerate(edates_list):
-		dt_obj = datetime.date.fromisoformat(d)
-		diff = f'{dt_obj-now}'
-		if diff == '0:00:00': diff_str = "0 days"
+		report_date = datetime.date.fromisoformat(d)
+		diff = f'{report_date-now_date}'
+		if diff == '0:00:00': diff_str = '0 days'
 		else: diff_str = diff.split(',')[0]
 		if (i == 0): dtr_str = diff_str
 		else: dtr_str += f', {diff_str}'

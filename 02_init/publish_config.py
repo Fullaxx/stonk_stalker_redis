@@ -7,8 +7,8 @@ import json
 import time
 import redis
 import signal
+import datetime
 
-from datetime import datetime
 from pathlib import Path
 
 sys.path.append('.')
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 #	Wait for the slow release of death
 	next = 0
 	while not g_shutdown:
-		now_dt = datetime.utcnow()
+		now_dt = datetime.datetime.now(datetime.timezone.utc)
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			publish_ready(r, False)
