@@ -120,8 +120,9 @@ def gen_daily_csv(df, yf_symbol):
 
 	DailyStrategy = ta.Strategy(
 		name = 'Daily Strategy',
-		description = 'ROC, SMA50, SMA100, SMA200, EMA5, EMA10, EMA20, WILLR, RSI, MACD, ADX, BB',
+		description = 'OBV, ROC, SMA50, SMA100, SMA200, EMA5, EMA10, EMA20, WILLR, RSI, MACD, STOCH, ADX, BB',
 		ta = [
+			{'kind': 'obv'},
 			{'kind': 'roc', 'length': 1},
 			{'kind': 'sma', 'length': 50},
 			{'kind': 'sma', 'length': 100},
@@ -132,6 +133,7 @@ def gen_daily_csv(df, yf_symbol):
 			{'kind': 'willr'},
 			{'kind': 'rsi'},
 			{'kind': 'macd', 'fast': 12, 'slow': 26},
+			{'kind': 'stoch', 'k': 14},
 			{'kind': 'adx', 'length': 14},
 			{'kind': 'bbands', 'length': 20, 'std': 2}
 		]
