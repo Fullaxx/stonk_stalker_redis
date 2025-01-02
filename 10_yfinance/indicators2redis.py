@@ -7,7 +7,7 @@ import csv
 import json
 import time
 import redis
-#import shutil
+
 import pandas as pd
 import pandas_ta as ta
 import yfinance as yf
@@ -147,6 +147,16 @@ def gen_daily_csv(df, yf_symbol):
 	df.to_csv(csv_filename, index=True, sep=',', encoding='utf-8')
 	return csv_filename
 
+#	SettingWithCopyWarning: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+#	https://stackoverflow.com/questions/54197853/how-to-ignore-settingwithcopywarning-using-warnings-simplefilter
+def process_symbol(df, yf_symbol, macro_dict):
+	with pd.option_context('mode.chained_assignment', None):
+		csv_filename = gen_daily_csv(df, yf_symbol)
+	if csv_filename is not None:
+		macro = get_macro_indicators(csv_filename, None)
+		if macro is not None:
+			macro_dict[yf_symbol] = macro
+
 # Generate a dictionary of macro indicators
 # the key is yf_symbol
 # the value is a json object of data
@@ -154,12 +164,9 @@ def gen_daily_indicators(pickle_filename, yf_symbol_list, r):
 	macro_dict = {}
 	ticker = pd.read_pickle(pickle_filename)
 	for yf_symbol in yf_symbol_list:
-		df = ticker[yf_symbol].copy()
-		csv_filename = gen_daily_csv(df, yf_symbol)
-		if csv_filename is not None:
-			macro = get_macro_indicators(csv_filename, None)
-			if macro is not None:
-				macro_dict[yf_symbol] = macro
+#		df = ticker[yf_symbol].copy()
+		df = ticker[yf_symbol]
+		process_symbol(df, yf_symbol, macro_dict)
 
 	return macro_dict
 
