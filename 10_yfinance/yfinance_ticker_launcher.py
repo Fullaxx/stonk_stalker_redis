@@ -5,8 +5,7 @@ import sys
 import time
 import redis
 import signal
-
-from datetime import datetime
+import datetime
 
 sys.path.append('.')
 sys.path.append('/app')
@@ -79,7 +78,7 @@ if __name__ == '__main__':
 	while not g_shutdown:
 		if (len(loop_set) == 0):
 			loop_set = symbols_set.copy()
-		now_dt = datetime.utcnow()
+		now_dt = datetime.datetime.now(datetime.timezone.utc)
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			symbol = loop_set.pop()

@@ -10,10 +10,12 @@
 
 import os
 import sys
-import time
 import json
 import redis
 import signal
+
+import time
+usleep = lambda x: time.sleep(x/1000000.0)
 
 sys.path.append('.')
 sys.path.append('/app')
@@ -21,8 +23,6 @@ from redis_helpers import connect_to_redis
 
 g_shutdown = False
 g_debug_python = False
-
-usleep = lambda x: time.sleep(x/1000000.0)
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)

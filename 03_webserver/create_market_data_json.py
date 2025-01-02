@@ -7,8 +7,8 @@ import json
 import time
 import redis
 import signal
+import datetime
 
-from datetime import datetime
 from contextlib import suppress
 
 sys.path.append('.')
@@ -157,7 +157,7 @@ if __name__ == '__main__':
 
 	next = 0
 	while not g_shutdown:
-		now_dt = datetime.utcnow()
+		now_dt = datetime.datetime.now(datetime.timezone.utc)
 		now_s = int(now_dt.timestamp())
 		if (now_s >= next):
 			dump_marketdb(r, now_dt, f'marketdb.json')

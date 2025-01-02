@@ -3,24 +3,25 @@
 
 import os
 import sys
-import time
-import pytz
 import json
 import redis
 import signal
+import datetime
 import requests
 
-from datetime import datetime
+import pytz
+g_tz_utc = pytz.UTC
+g_tz_et = pytz.timezone('US/Eastern')
+
+import time
+usleep = lambda x: time.sleep(x/1000000.0)
 
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
 
-usleep = lambda x: time.sleep(x/1000000.0)
-
 g_shutdown = False
 g_debug_python = False
-g_etz = pytz.timezone('US/Eastern')
 
 def signal_handler(sig, frame):
 	global g_shutdown
@@ -54,9 +55,7 @@ def check_market_status():
 	try:
 		response = requests.get(clock_url, headers=headers)
 	except Exception as e:
-		now_z = datetime.utcnow()
-		now_et = now_z.astimezone(g_etz)
-		timestamp = now_et.strftime('%y%m%d-%H%M%S')
+		timestamp = datetime.datetime.now(g_tz_et).strftime('%y%m%d-%H%M%S')
 		eprint(timestamp, e)
 	else:
 		if g_debug_python:
@@ -103,10 +102,10 @@ if __name__ == '__main__':
 
 	last_trigger = 0
 	while not g_shutdown:
-		now_z = datetime.utcnow().timestamp()
-		now_sec = int(now_z)
-		if ((now_sec % (30*60)) == 0):
-			if (now_sec > last_trigger):
+		now_dt = datetime.datetime.now(g_tz_utc)
+		now_s = int(now_dt.timestamp())
+		if ((now_s % (30*60)) == 0):
+			if (now_s > last_trigger):
 				every_30min(r)
-				last_trigger = now_sec
+				last_trigger = now_s
 		usleep(1000)
