@@ -61,6 +61,9 @@ def yfinance_handle_new_stock_dailyindicators(r, key, symbol):
 	key = f'DASHBOARD:DATA:BBPCT:{symbol}'
 	yfinance_dashboard_save(r, symbol, key, bb_pct)
 
+# edates_list looks something like this:
+# ['2025-01-30']
+# ['2025-01-31', '2025-02-04']
 def yfinance_handle_new_stock_calendar(r, key, symbol):
 	dtr_str = ''
 	val = r.get(key)
