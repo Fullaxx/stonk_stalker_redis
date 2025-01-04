@@ -19,6 +19,14 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
+def create_weekly_report(dtr_by_time, start, stop, week):
+	print()
+	symbols_list = []
+	for i in range(start, stop):
+		if i in dtr_by_time:
+			symbols_list += dtr_by_time[i]
+	print(week, symbols_list)
+
 def update_dicts(key, val, dtr_by_symbol, dtr_by_time):
 	symbol = key.split(':')[3]
 	dtr_str = val.split(' ')[0]
@@ -70,3 +78,9 @@ if __name__ == '__main__':
 		if i in dtr_by_time:
 			print(i, dtr_by_time[i])
 
+	create_weekly_report(dtr_by_time, 0, 7, '1w')
+	create_weekly_report(dtr_by_time, 8, 14, '2w')
+	create_weekly_report(dtr_by_time, 15, 21, '3w')
+	create_weekly_report(dtr_by_time, 22, 28, '4w')
+	create_weekly_report(dtr_by_time, 29, 35, '5w')
+	create_weekly_report(dtr_by_time, 36, 42, '6w')
