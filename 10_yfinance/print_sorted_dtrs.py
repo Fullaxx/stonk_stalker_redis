@@ -38,12 +38,10 @@ def update_dicts(key, val, dtr_by_symbol, dtr_by_time):
 
 	dtr_by_symbol[symbol] = dtr
 
-	if dtr in dtr_by_time:
-		report_list = dtr_by_time[dtr]
-	else:
-		report_list = []
+	if dtr not in dtr_by_time:
+		dtr_by_time[dtr] = []
+	report_list = dtr_by_time[dtr]
 	report_list.append(symbol)
-	dtr_by_time[dtr] = report_list
 
 def acquire_environment():
 	global g_debug_python
@@ -72,12 +70,12 @@ if __name__ == '__main__':
 		if val is not None:
 			update_dicts(key, val, dtr_by_symbol, dtr_by_time)
 
-#	for k,v in dtr_by_time.items():
-#		print(k, v)
+	for k,v in sorted(dtr_by_time.items()):
+		print(k, v)
 
-	for i in range(0, 42):
-		if i in dtr_by_time:
-			print(i, dtr_by_time[i])
+#	for i in range(0, 42):
+#		if i in dtr_by_time:
+#			print(i, dtr_by_time[i])
 
 	create_weekly_report(dtr_by_time, 0, 7, '1w')
 	create_weekly_report(dtr_by_time, 8, 14, '2w')

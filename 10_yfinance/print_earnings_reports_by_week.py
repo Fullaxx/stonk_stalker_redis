@@ -24,6 +24,30 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
+# We should get the DTR value for the symbol
+# and we should ignore the symbol if its DTR is less than zero
+# Assign each symbol to a specific week
+# If symbol has already reported, put them in 'r'
+def update_ecal(days_away_int, symbol):
+	key = f'DASHBOARD:DATA:DAYSTILLREPORT:{symbol}'
+	dtr_str = r.get(key)
+	if dtr_str is None: return
+	dtr_val = dtr_str.split(' ')[0]
+	dtr = int(dtr_val)
+	if (dtr < 0):
+		print(f'{symbol:<6} {dtr:>3} DTR')
+		week = 'r'
+	elif(days_away_int < 7*1): week = '1w'
+	elif(days_away_int < 7*2): week = '2w'
+	elif(days_away_int < 7*3): week = '3w'
+	elif(days_away_int < 7*4): week = '4w'
+	elif(days_away_int < 7*5): week = '5w'
+	elif(days_away_int < 7*6): week = '6w'
+	else: return
+
+	report_list = g_earnings_cal_by_week[week]
+	report_list.append(symbol)
+
 def calc_days_until(target_date, ref_date):
 	diff = f'{target_date-ref_date}'
 	if diff == '0:00:00': diff_str = '0 days'
@@ -32,18 +56,13 @@ def calc_days_until(target_date, ref_date):
 	days_away_int = int(days_away_str)
 	return days_away_int
 
-def update_earnings_report_by_date_dict(symbol, report_date_str):
-#	Limit our catalog to relevant earnings reports (6w from the reference Sunday)
+# Find all the companies reporting within 6 weeks of the Sunday reference point
+def handle_earnings_report_date(symbol, report_date_str):
 	report_date = datetime.date.fromisoformat(report_date_str)
 	days_away_int = calc_days_until(report_date, g_sunday)
-	if (days_away_int < 0) or (days_away_int > 42):
-		return
-
-	if report_date_str not in g_earnings_cal_by_date:
-		g_earnings_cal_by_date[report_date_str] = []
-
-	date_list = g_earnings_cal_by_date[report_date_str]
-	date_list.append(symbol)
+	if (days_away_int > 0) and (days_away_int < 43):
+#		print(f'{symbol:<6} {report_date} {days_away_int:>3}')
+		update_ecal(days_away_int, symbol)
 
 # Return date object of the most relevant Sunday reference point
 def get_sunday_reference():
@@ -61,26 +80,6 @@ def get_sunday_reference():
 	sunday = g_today + datetime.timedelta(days=days_offest)
 	print(f'Today:  {g_today}\nSunday: {sunday}\n')
 	return sunday
-
-def save_week(start, stop, week):
-	key = f'DASHBOARD:DATA:ERCAL:{week}'
-	print(key)
-
-	this_week_cell_data = ''
-	for i in range(start, stop):
-		report_date = g_sunday + datetime.timedelta(days=i)
-		days_until = calc_days_until(report_date, g_today)
-		if (week == 'r') and (days_until >= 0): continue
-		if (week != 'r') and (days_until  < 0): continue
-
-		report_date_str = report_date.strftime('%Y-%m-%d')
-		if report_date_str in g_earnings_cal_by_date:
-			symbols_reporting = g_earnings_cal_by_date[report_date_str]
-			print(f'{report_date_str}: {symbols_reporting}')
-			this_week_cell_data += f'{report_date_str}: ' + ','.join(symbols_reporting) + '</br>'
-
-	print()
-	r.set(key, this_week_cell_data)
 
 def acquire_environment():
 	global g_debug_python
@@ -105,7 +104,7 @@ if __name__ == '__main__':
 	g_today = datetime.date.fromisoformat(now_et_str)
 
 	g_sunday = get_sunday_reference()
-	g_earnings_cal_by_date = {}
+	g_earnings_cal_by_week = { 'r':[], '1w':[], '2w':[], '3w':[], '4w':[], '5w':[], '6w':[] }
 
 	searchpattern = f'YFINANCE:CALENDAR:STOCK:*'
 	for key in sorted(r.scan_iter(searchpattern)):
@@ -120,12 +119,10 @@ if __name__ == '__main__':
 			continue
 
 		report_date_str = edates_list[0]
-		update_earnings_report_by_date_dict(symbol, report_date_str)
+		handle_earnings_report_date(symbol, report_date_str)
 
-	save_week(0,   7,  'r')
-	save_week(0,   7, '1w')
-	save_week(8,  14, '2w')
-	save_week(15, 21, '3w')
-	save_week(22, 28, '4w')
-	save_week(29, 35, '5w')
-	save_week(36, 42, '6w')
+	for k,v in g_earnings_cal_by_week.items():
+		symbols_reporting_this_week_str = ','.join(v)
+		print(k, symbols_reporting_this_week_str)
+#		key = f'DASHBOARD:DATA:ERCAL:{k}'
+#		r.set(key, symbols_reporting_this_week_str)
