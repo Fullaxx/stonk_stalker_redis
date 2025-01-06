@@ -25,6 +25,17 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
+def create_er_cal(r):
+	html = ''
+	html += '<table>'
+	html += '<tr><th colspan=2 id=ercal>Upcoming Earnings Calendar</th></tr>'
+	for week in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
+		inner_html = r.get(f'DASHBOARD:DATA:ERCAL:{week}')
+		if inner_html is None: inner_html = ''
+		html += f'<tr><td>{week}</td><td class=ercal_symbols id=ercaldata_{week}>{inner_html}</td></tr>'
+	html += '</table>'
+	return html
+
 def create_mini_cal():
 	green_months_list = ['Jan', 'Jul']
 	red_months_list = ['Apr', 'Jun', 'Sep', 'Oct', 'Dec']
@@ -48,7 +59,7 @@ def create_mini_cal():
 
 	html += '</table>'
 	html += '</div></h3>'
-	html += '<hr>'
+
 	return html
 
 def gen_html_table(k, table_name, table_type, symbols_str, dc):
@@ -186,8 +197,12 @@ def gen_html_body(r, cfg):
 	dc = cfg['DASHBOARD_CONFIG']
 	if dc['DISPLAY_MINI_CALENDAR']:
 		html += create_mini_cal()
+		html += create_er_cal(r)
 	else:
 		html += '<h3><div id=time></div></h3>'
+
+#	Horizontal Seperator
+	html += '<hr>'
 
 	for k,v in cfg.items():
 		if k.startswith('TABLE_'):
