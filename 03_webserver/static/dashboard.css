@@ -6,6 +6,11 @@ table, th, td {
 #	border-radius: 10px;
 }
 
+.ercal_symbols {
+	font-size: 12px;
+	text-align: center;
+}
+
 a { color: #000000; }
 
 .symb_up { background-color: #AAFFAA; }

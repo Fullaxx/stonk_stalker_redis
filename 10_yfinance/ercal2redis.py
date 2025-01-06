@@ -62,6 +62,18 @@ def get_sunday_reference():
 	print(f'Today:  {g_today}\nSunday: {sunday}\n')
 	return sunday
 
+def which_day_of_week(report_date):
+	day_num = report_date.weekday()
+	if   (day_num == 0): return 'Mon'
+	elif (day_num == 1): return 'Tue'
+	elif (day_num == 2): return 'Wed'
+	elif (day_num == 3): return 'Thu'
+	elif (day_num == 4): return 'Fri'
+	elif (day_num == 5): return 'Sat'
+	elif (day_num == 6): return 'Sun'
+	return None
+
+# pr means past report (-1 days away or more)
 def save_week(start, stop, week):
 	key = f'DASHBOARD:DATA:ERCAL:{week}'
 	print(key)
@@ -69,15 +81,20 @@ def save_week(start, stop, week):
 	this_week_cell_data = ''
 	for i in range(start, stop):
 		report_date = g_sunday + datetime.timedelta(days=i)
+		day_of_week = which_day_of_week(report_date)
 		days_until = calc_days_until(report_date, g_today)
-		if (week == 'r') and (days_until >= 0): continue
-		if (week != 'r') and (days_until  < 0): continue
+
+#		If we are looking for past earnings reports, skip over anything in the future
+		if (week == 'pr') and (days_until >= 0): continue
+
+#		If we are looking for future earnings reports, skip over anything in the past
+		if (week != 'pr') and (days_until  < 0): continue
 
 		report_date_str = report_date.strftime('%Y-%m-%d')
 		if report_date_str in g_earnings_cal_by_date:
 			symbols_reporting = g_earnings_cal_by_date[report_date_str]
 			print(f'{report_date_str}: {symbols_reporting}')
-			this_week_cell_data += f'{report_date_str}: ' + ','.join(symbols_reporting) + '</br>'
+			this_week_cell_data += f'{day_of_week} {report_date_str}: ' + ', '.join(symbols_reporting) + '</br>'
 
 	print()
 	r.set(key, this_week_cell_data)
@@ -122,7 +139,7 @@ if __name__ == '__main__':
 		report_date_str = edates_list[0]
 		update_earnings_report_by_date_dict(symbol, report_date_str)
 
-	save_week(0,   7,  'r')
+	save_week(0,   7, 'pr')
 	save_week(0,   7, '1w')
 	save_week(8,  14, '2w')
 	save_week(15, 21, '3w')
