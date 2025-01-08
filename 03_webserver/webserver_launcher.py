@@ -54,7 +54,9 @@ def update_next_open():
 		nosa = g_nextopen_zs - g_now_s
 		now_et = g_now_z.astimezone(g_tz_et)
 		log_timestamp_str = now_et.strftime('%Y-%m-%d %H:%M:%S')
-		print(f'{log_timestamp_str}: next_open={g_nextopen_zs} {nosa} seconds away', flush=True)
+		nextopen_z = datetime.datetime.fromtimestamp(g_nextopen_zs, tz=pytz.UTC)
+		nextopen_et = nextopen_z.astimezone(g_tz_et)
+		print(f'{log_timestamp_str}: next_open={g_nextopen_zs} {nosa} seconds away @ {nextopen_et}', flush=True)
 
 #	Calculate how far away we are from the market open using g_next_open_timestamp
 #	If we are within 1 second, launch ./update_prevclose.py
