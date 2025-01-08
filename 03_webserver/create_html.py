@@ -4,7 +4,6 @@
 import os
 import sys
 import json
-import time
 import redis
 
 sys.path.append('.')
@@ -261,5 +260,3 @@ if __name__ == '__main__':
 	cfg_str = r.get('DASHBOARD:CONFIG')
 	ss_config = json.loads(cfg_str)
 	gen_index_html(r, ss_config)
-	time.sleep(3)
-#	Sleep for a bit so supervisord knows all is well

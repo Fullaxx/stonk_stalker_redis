@@ -4,10 +4,7 @@
 import os
 import sys
 import json
-import time
 import redis
-import signal
-import datetime
 
 from contextlib import suppress
 
@@ -90,10 +87,10 @@ def prepare_marketdb(r):
 		marketdb[symbol] = prepare_symbol(r, symbol)
 	return marketdb
 
-def dump_marketdb(r, now_dt, filename):
+def dump_marketdb(r, filename):
 	marketdb = prepare_marketdb(r)
 	market_str = json.dumps(marketdb)
-	print(f'{now_dt} Writing {filename} ...', flush=True)
+#	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
 
 def prepare_marketlist(r):
@@ -109,20 +106,11 @@ def prepare_marketlist(r):
 		marketlist.append(symbol_obj)
 	return marketlist
 
-def dump_marketlist(r, now_dt, filename):
+def dump_marketlist(r, filename):
 	marketlist = prepare_marketlist(r)
 	market_str = json.dumps(marketlist)
-	print(f'{now_dt} Writing {filename} ...', flush=True)
+#	print(f'{now_dt} Writing {filename} ...', flush=True)
 	write_to_file(market_str, filename)
-
-#	Load MARKET_DATA_CREATE_INTERVAL from config
-def load_market_json_creation_interval(r):
-	cfg_str = r.get('DASHBOARD:CONFIG')
-	ss_config = json.loads(cfg_str)
-	dash_config = ss_config['DASHBOARD_CONFIG']
-	interval = dash_config['MARKET_DATA_CREATE_INTERVAL']
-	print(f'Will update market data every {interval} seconds', flush=True)
-	return interval
 
 def acquire_environment():
 	global g_debug_python
@@ -149,18 +137,6 @@ if __name__ == '__main__':
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
-	market_json_creation_interval = load_market_json_creation_interval(r)
 
-	signal.signal(signal.SIGINT,  signal_handler)
-	signal.signal(signal.SIGTERM, signal_handler)
-	signal.signal(signal.SIGQUIT, signal_handler)
-
-	next = 0
-	while not g_shutdown:
-		now_dt = datetime.datetime.now(datetime.timezone.utc)
-		now_s = int(now_dt.timestamp())
-		if (now_s >= next):
-			dump_marketdb(r, now_dt, f'marketdb.json')
-			dump_marketlist(r, now_dt, f'marketlist.json')
-			next = now_s + market_json_creation_interval
-		time.sleep(0.1)
+#	dump_marketdb(r, f'marketdb.json')
+	dump_marketlist(r, f'marketlist.json')

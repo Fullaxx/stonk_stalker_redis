@@ -5,24 +5,19 @@ import os
 import sys
 import json
 import redis
-import signal
 import datetime
 
 from contextlib import suppress
 
-import time
-usleep = lambda x: time.sleep(x/1000000.0)
+import pytz
+g_tz_utc = pytz.UTC
+g_tz_et = pytz.timezone('US/Eastern')
 
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
-
-g_shutdown = False
-def signal_handler(sig, frame):
-	global g_shutdown
-	g_shutdown = True
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -36,10 +31,16 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def dump_market_status(r, now_dt, filename):
-	market_clock_str = r.get('MARKET:CLOCK')
-	if market_clock_str is None: return
-	print(f'{now_dt} Writing {filename} ...', flush=True)
+def dump_market_status(r, filename):
+	market_clock_str = r.get('ALPACA:MARKET:CLOCK:JSON')
+	if market_clock_str is None:
+		eprint(f'ALPACA:MARKET:CLOCK:JSON returned None!', flush=True)
+		return
+	if g_debug_python:
+		now_z = datetime.datetime.now(g_tz_utc)
+		now_et = now_z.astimezone(g_tz_et)
+		timestamp_str = now_et.strftime('%Y-%m-%d %H:%M:%S')
+		print(f'{timestamp_str}: Writing {filename} ...', flush=True)
 	write_to_file(market_clock_str, filename)
 
 def acquire_environment():
@@ -67,15 +68,4 @@ if __name__ == '__main__':
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 #	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
 
-	signal.signal(signal.SIGINT,  signal_handler)
-	signal.signal(signal.SIGTERM, signal_handler)
-	signal.signal(signal.SIGQUIT, signal_handler)
-
-	next = 0
-	while not g_shutdown:
-		now_dt = datetime.datetime.now(datetime.timezone.utc)
-		now_s = int(now_dt.timestamp())
-		if (now_s >= next):
-			dump_market_status(r, now_dt, f'market_status.json')
-			next = now_s + 1
-		usleep(1000)
+	dump_market_status(r, f'market_status.json')

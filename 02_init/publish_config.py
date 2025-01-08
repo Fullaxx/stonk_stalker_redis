@@ -58,8 +58,8 @@ def check_dc_bool_value(dc, key, default):
 def check_dc(dc):
 	check_dc_str_value(dc, 'THEME', 'light')
 
-	check_dc_int_value(dc, 'MARKET_DATA_CREATE_INTERVAL', 1)
-	check_dc_int_value(dc, 'JSON_FETCH_INTERVAL', 2000)
+	check_dc_int_value(dc, 'MARKET_DATA_CREATE_INTERVAL', 2)
+	check_dc_int_value(dc, 'JSON_FETCH_INTERVAL', 3000)
 
 	check_dc_bool_value(dc, 'DISPLAY_MINI_CALENDAR', False)
 	check_dc_bool_value(dc, 'DISPLAY_MARKET_CAP', False)
