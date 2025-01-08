@@ -48,10 +48,10 @@ if __name__ == '__main__':
 	redis_url = acquire_environment()
 	r = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	market_status_str = r.get('MARKET:STATUS')
+	market_status_str = r.get('ALPACA:MARKET:STATUS:TEXT')
 	print(f'Stock Market is {market_status_str}')
 
-	market_clock_str = r.get('MARKET:CLOCK')
+	market_clock_str = r.get('ALPACA:MARKET:CLOCK:JSON')
 	market_clock = json.loads(market_clock_str)
 	next_open,diff_open = calc_next(market_clock['next_open'])
 	next_close,diff_close = calc_next(market_clock['next_close'])

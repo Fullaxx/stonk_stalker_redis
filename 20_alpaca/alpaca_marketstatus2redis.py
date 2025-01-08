@@ -36,14 +36,21 @@ def bailmsg(*args, **kwargs):
 
 def set_market_status(r, json_str):
 	print(json_str, flush=True)
-	json_obj = json.loads(json_str)
-	status_text = 'open' if json_obj['is_open'] else 'closed'
-	r.set('MARKET:CLOCK', json_str)
-	r.set('MARKET:STATUS', status_text)
+	alpaca_market_clock = json.loads(json_str)
+	status_text = 'open' if alpaca_market_clock['is_open'] else 'closed'
+	nextopen_str = alpaca_market_clock['next_open']
+	nextopen_et = datetime.datetime.strptime(nextopen_str, '%Y-%m-%dT%H:%M:%S%z')
+	nextopen_zstamp = int(nextopen_et.astimezone(g_tz_utc).timestamp())
+
+	r.set('ALPACA:MARKET:CLOCK:JSON', json_str)
+	r.set('ALPACA:MARKET:STATUS:TEXT', status_text)
+	r.set('ALPACA:MARKET:NEXTOPEN:ZSTAMP', nextopen_zstamp)
 
 # ENDPOINT: https://paper-api.alpaca.markets/v2/clock
 # ENDPOINT: https://api.alpaca.markets/v2/clock
 def check_market_status():
+	retval = None
+
 #	baseurl = 'https://api.alpaca.markets'
 	baseurl = 'https://paper-api.alpaca.markets'
 	clock_url = f'{baseurl}/v2/clock'
@@ -60,10 +67,9 @@ def check_market_status():
 	else:
 		if g_debug_python:
 			print(response.text, flush=True)
-		return response.text
+		retval = response.text
 
-#	if Exception was caught
-	return None
+	return retval
 
 def every_30min(r):
 	json_resp = check_market_status()
@@ -104,7 +110,7 @@ if __name__ == '__main__':
 	while not g_shutdown:
 		now_dt = datetime.datetime.now(g_tz_utc)
 		now_s = int(now_dt.timestamp())
-		if ((now_s % (30*60)) == 0):
+		if ((now_s % (60*30)) == 0):
 			if (now_s > last_trigger):
 				every_30min(r)
 				last_trigger = now_s

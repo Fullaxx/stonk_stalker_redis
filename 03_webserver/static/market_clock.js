@@ -43,6 +43,7 @@ function market_status_init()
 {
   var market_status_html = $('[id="marketstatus"]').html();
   if (market_status_html == 'MARKETSTATUSINIT') {
-    setInterval(update_market_status, 1000);
+    update_market_status(); //Do it once first
+    setInterval(update_market_status, 10000);
   }
 }
