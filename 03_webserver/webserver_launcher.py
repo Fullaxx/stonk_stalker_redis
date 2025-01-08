@@ -20,8 +20,7 @@ from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
 g_wait_for_ready = True
-g_last_nextopen_str = None
-g_next_open_timestamp = None
+g_nextopen_zs = 0
 
 g_shutdown = False
 def signal_handler(sig, frame):
@@ -42,57 +41,45 @@ def launch_script(path, now_z, verbose):
 		print(f'{timestamp_str}: {path}', flush=True)
 	os.system(path)
 
-#	Get the most recent value for ALPACA:MARKET:CLOCK:JSON from redis
-#	If it has changed, print a message and update g_next_open_timestamp
-def update_next_open(r, now_z):
-	global g_last_nextopen_str, g_next_open_timestamp
+#	Get the most recent value for ALPACA:MARKET:NEXTOPEN:ZSTAMP from redis
+#	If it has changed, print a message and update g_nextopen_zs
+def update_next_open(r, now_z, now_s):
+	global g_nextopen_zs
 
-	changed = False
-	market_clock_str = r.get('ALPACA:MARKET:CLOCK:JSON')
-	if market_clock_str is None: return
-	market_clock = json.loads(market_clock_str)
-	nextopen_str = market_clock['next_open']
-
-	if g_last_nextopen_str is None:
-		changed = True
-		g_last_nextopen_str = nextopen_str
-	elif (nextopen_str != g_last_nextopen_str):
-		changed = True
-
-	if changed:
+	nextopen_zstamp_str = r.get('ALPACA:MARKET:NEXTOPEN:ZSTAMP')
+	if nextopen_zstamp_str is None: return
+	nextopen_zs = int(nextopen_zstamp_str)
+	if (nextopen_zs != g_nextopen_zs):
+		g_nextopen_zs = nextopen_zs
+		nosa = g_nextopen_zs - now_s
 		now_et = now_z.astimezone(g_tz_et)
-		timestamp_str = now_et.strftime('%Y-%m-%d %H:%M:%S')
-		print(f'{timestamp_str}: next_open={nextopen_str}', flush=True)
-
-	next_open_et = datetime.datetime.strptime(nextopen_str, '%Y-%m-%dT%H:%M:%S%z')
-	now_unix_float = next_open_et.astimezone(g_tz_utc).timestamp()
-	g_next_open_timestamp = int(now_unix_float)
+		log_timestamp_str = now_et.strftime('%Y-%m-%d %H:%M:%S')
+		print(f'{log_timestamp_str}: next_open={g_nextopen_zs} {nosa} seconds away', flush=True)
 
 #	Calculate how far away we are from the market open using g_next_open_timestamp
 #	If we are within 1 second, launch ./update_prevclose.py
-def check_for_upcoming_market_open(now_z):
-	global g_next_open_timestamp
-	if (g_next_open_timestamp is None): return
-	now_s = int(now_z.timestamp())
-	next_open_seconds_away = g_next_open_timestamp - now_s
-	if g_debug_python: print(f'{next_open_seconds_away} seconds away')
-	if (next_open_seconds_away == 1):
+def prepare_for_upcoming_market_open(now_z, now_s):
+	global g_nextopen_zs
+	if (g_nextopen_zs == 0): return
+	nosa = g_nextopen_zs - now_s
+	if g_debug_python:
+		print(f'{nosa} seconds away')
+	if (nosa == 1):
 		launch_script('./update_prevclose.py', now_z, True)
 
 def every_hour(r, now_z):
-	update_next_open(r, now_z)
 	launch_script('./create_html.py', now_z, True)
 
-#def every_halfhour(now_z):
-#	pass
-#
+def every_halfhour(now_z, now_s):
+	update_next_open(r, now_z, now_s)
+
 #def every_minute(now_z):
 #	pass
 
 def every_second(now_z, now_s):
 	global g_last_mdjc_trigger
 
-	check_for_upcoming_market_open(now_z)
+	prepare_for_upcoming_market_open(now_z, now_s)
 	launch_script('./create_market_status_json.py', now_z, False)
 	if (now_s >= (g_last_mdjc_trigger + g_market_json_creation_interval)):
 		launch_script('./create_market_data_json.py', now_z, False)
@@ -149,12 +136,13 @@ if __name__ == '__main__':
 	g_market_json_creation_interval = load_market_json_creation_interval(r)
 
 #	Tasks to do once at startup
-	now_dt = datetime.datetime.now(g_tz_utc)
-	update_next_open(r, now_dt)
-	launch_script('./create_html.py', now_dt, False)
-	launch_script('./create_market_status_json.py', now_dt, False)
-	launch_script('./create_market_data_json.py', now_dt, False)
-	g_last_mdjc_trigger = int(now_dt.timestamp())
+	now_z = datetime.datetime.now(g_tz_utc)
+	now_s = int(now_z.timestamp())
+	update_next_open(r, now_z, now_s)
+	launch_script('./create_html.py', now_z, False)
+	launch_script('./create_market_status_json.py', now_z, False)
+	launch_script('./create_market_data_json.py', now_z, False)
+	g_last_mdjc_trigger = int(now_z.timestamp())
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
@@ -162,25 +150,25 @@ if __name__ == '__main__':
 
 	g_last_sec_trigger = 0
 #	g_last_min_trigger = 0
-#	g_last_halfhour_trigger = 0
+	g_last_halfhour_trigger = 0
 	g_last_hour_trigger = 0
 	while not g_shutdown:
-		now_dt = datetime.datetime.now(g_tz_utc)
-		now_s = int(now_dt.timestamp())
+		now_z = datetime.datetime.now(g_tz_utc)
+		now_s = int(now_z.timestamp())
 		if (now_s > g_last_sec_trigger):
-			every_second(now_dt, now_s)
+			every_second(now_z, now_s)
 			g_last_sec_trigger = now_s
 #		if ((now_s % 60) == 0):
 #			if (now_s > g_last_min_trigger):
-#				every_minute(now_dt)
+#				every_minute(now_z)
 #				g_last_min_trigger = now_s
-#		if ((now_s % 1800) == 0):
-#			if (now_s > g_last_halfhour_trigger):
-#				every_halfhour(now_dt)
-#				g_last_halfhour_trigger = now_s
+		if ((now_s % 1800) == 0):
+			if (now_s > g_last_halfhour_trigger):
+				every_halfhour(now_z)
+				g_last_halfhour_trigger = now_s
 		if ((now_s % 3600) == 0):
 			if (now_s > g_last_hour_trigger):
-				every_hour(r, now_dt)
+				every_hour(r, now_z)
 				g_last_hour_trigger = now_s
 
 		usleep(1000)
