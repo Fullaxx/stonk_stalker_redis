@@ -30,34 +30,31 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def dashboard_save(symbol, key, val):
+def dashboard_save(key, val):
 	if val is None:
 		eprint(f'{key} has NULL vlaue - NOT SETTING!')
 		return
 
 	result = g_rc.set(key, val)
 	if result:
-		print(f'SET {key:<20} {val}', flush=True)
+		print(f'SET {key:<40} {val}', flush=True)
 	else:
-		eprint(f'SET {key:<20} FAILED!')
+		eprint(f'SET {key:<40} FAILED!')
 
 def update_prevclose(src, symbol, pc):
 	if symbol in g_non_stock_symbols_set:
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		dashboard_save(symbol, key, pc)
-#		print(f'{src}: {s} @ ${pc} prev')
+		dashboard_save(key, pc)
 
 def update_price(src, symbol, cp):
 	if symbol in g_non_stock_symbols_set:
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		dashboard_save(symbol, key, cp)
-#		print(f'{src}: {s} @ ${cp}')
+		dashboard_save(key, cp)
 
 def process_spark(resultarray):
 	src = 'spark'
-#	pprint(resultarray)
 	for item in resultarray:
-		this_symbol = item['symbol']
+		this_symbol = item['symbol'].replace('-','/')
 		resp_array = item['response']
 		for r in resp_array:
 			if 'meta' in r:
@@ -68,9 +65,8 @@ def process_spark(resultarray):
 
 def process_quote_response(resultarray):
 	src = 'quote'
-#	pprint(resultarray)
 	for item in resultarray:
-		this_symbol = item['symbol']
+		this_symbol = item['symbol'].replace('-','/')
 		if 'regularMarketPrice' in item:
 			cp = item['regularMarketPrice']['raw']
 			update_price(src, this_symbol, cp)
@@ -80,7 +76,6 @@ def process_quote_response(resultarray):
 
 def process_body(body_str):
 	quote = json.loads(body_str)
-#	pprint(quote)
 	if ('quoteResponse' in quote):
 		resp = quote['quoteResponse']
 		if (resp['error'] == None):
@@ -94,7 +89,6 @@ def process_body(body_str):
 
 def process_resource(requested_symbol, resource_str):
 	resource = json.loads(resource_str)
-#	pprint(resource)
 	if (resource['status'] == 200):
 		process_body(resource['body'])
 
@@ -120,10 +114,11 @@ if __name__ == '__main__':
 	redis_url,zmq_url = acquire_environment()
 
 	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
+	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
 	index_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
 	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
 	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
-	g_non_stock_symbols_set = index_set.union(etf_set).union(future_set)
+	g_non_stock_symbols_set = crypto_set.union(index_set).union(etf_set).union(future_set)
 
 	ctx = zmq.Context()
 	receiver = ctx.socket(zmq.PULL)
