@@ -54,7 +54,6 @@ def create_mini_cal():
 	red_months_list = ['Apr', 'Jun', 'Sep', 'Oct', 'Dec']
 	months_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-	html += '<h3><div id=minical>'
 	html += '<table>'
 	html += f'<tr><th colspan=12 id=marketclock>MARKETCLOCK</th></tr>'
 	html += f'<tr><th colspan=12 id=marketstatus>MARKETSTATUSINIT</th></tr>'
@@ -70,7 +69,6 @@ def create_mini_cal():
 	html += '</tr>'
 
 	html += '</table>'
-	html += '</div></h3>'
 
 	return html
 
@@ -184,14 +182,15 @@ def gen_html_body():
 
 	html = '<body>'
 	html += '<center>'
-	html += f'<h2>Stonk Stalker ({symbols_count} Symbols)</h2>'
+	html += f'<p class=titleheader>Stonk Stalker ({symbols_count} Symbols)</p>'
 
 	dc = g_cfg['DASHBOARD_CONFIG']
-	if dc['DISPLAY_MINI_CALENDAR']:
+	if dc['PAGE_HEADER_TYPE'] == 'simple':
+		html += '<p class=standalonemarketclock id=marketclock></p>'
+	if dc['PAGE_HEADER_TYPE'] == 'calendars':
 		html += create_mini_cal()
+		html += '<br>'
 		html += create_er_cal()
-	else:
-		html += '<h3><div id=time></div></h3>'
 
 #	Horizontal Seperator
 	html += '<hr>'
