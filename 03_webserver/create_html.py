@@ -24,16 +24,15 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def create_er_cal():
+def create_er_cal_list():
 	html = ''
 
 	earnings_bundle_str = g_rc.get('DASHBOARD:DATA:ERCAL:BUNDLE')
 	if earnings_bundle_str is None: return html
 	ercal = json.loads(earnings_bundle_str)
 
-	html += '<table>'
-
-	html += '<tr><th colspan=3>Upcoming Earnings Calendar</th></tr>'
+	html += '<table id=ercallist hidden>'
+	html += '<tr><th colspan=3>Upcoming Earnings Calendar List</th></tr>'
 	for w in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
 		this_week = ercal[w]
 		if (len(this_week) == 0):
@@ -45,6 +44,36 @@ def create_er_cal():
 				html += f'<tr><td>{w}</td><td>{k} {day}</td><td class=ercal_symbols>{symbols}</td></tr>'
 
 	html += '</table>'
+
+	return html
+
+def todays_reports(this_week, day):
+	for k,v in this_week.items():
+		if (v['day'] == day):
+			return v['symbols']
+	return ''
+
+def create_er_cal_grid():
+	html = ''
+
+	earnings_bundle_str = g_rc.get('DASHBOARD:DATA:ERCAL:BUNDLE')
+	if earnings_bundle_str is None: return html
+	ercal = json.loads(earnings_bundle_str)
+
+	html += '<table id=ercalgrid>'
+	html += '<tr><th colspan=6>Upcoming Earnings Calendar Grid</th></tr>'
+	html += f'<tr><th>Week</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>'
+	for w in ['1w', '2w', '3w', '4w', '5w', '6w']:
+		this_week = ercal[w]
+		html += f'<tr>'
+		html += f'<td>{w}</td>'
+		for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
+			symbols_str = todays_reports(this_week, day)
+			html += f'<td class=ercal_symbols>{symbols_str}</td>'
+		html += f'</tr>'
+
+	html += '</table>'
+
 	return html
 
 def create_mini_cal():
@@ -190,7 +219,12 @@ def gen_html_body():
 	if dc['PAGE_HEADER_TYPE'] == 'calendars':
 		html += create_mini_cal()
 		html += '<br>'
-		html += create_er_cal()
+		html += f'<button onclick=toggleHidden("ercalgrid") type="button">Toggle Grid</button>'
+		html += f'<button onclick=toggleHidden("ercallist") type="button">Toggle List</button>'
+		html += '<br>'
+		html += create_er_cal_list()
+		html += '<br>'
+		html += create_er_cal_grid()
 
 #	Horizontal Seperator
 	html += '<hr>'
@@ -224,7 +258,7 @@ def gen_html_head():
 	dashboard_theme = dash_config['THEME']
 
 	html = '<head>'
-	html += '<meta charset=utf-8>'
+	html += '<meta charset="utf-8">'
 	html += '<title>Stonk Stalker</title>'
 	if (dashboard_theme == 'dark'):
 		html += '<link rel="stylesheet" href="static/dashboard-dark.css">'
@@ -232,16 +266,18 @@ def gen_html_head():
 		html += '<link rel="stylesheet" href="static/dashboard.css">'
 	html += '<script src="static/jquery-3.7.1.min.js"></script>'
 	html += '<script src="static/market_clock.js"></script>'
-	html += '<script src="static/market_data.js"></script>'
 	html += '<script>$(document).ready(function(){ market_clock_init(); });</script>'
 	html += '<script>$(document).ready(function(){ market_status_init(); });</script>'
+	html += '<script src="static/market_calendars.js"></script>'
+	html += '<script>$(document).ready(function(){ market_calendars_init(); });</script>'
+	html += '<script src="static/market_data.js"></script>'
 	html += '<script>$(document).ready(function(){ market_data_init(' + str(json_fetch_interval) + '); });</script>'
 	html += '</head>'
 	return html
 
 def gen_index_html():
 	html = '<!DOCTYPE html>'
-	html += '<html lang=en>'
+	html += '<html lang="en">'
 	html += gen_html_head()
 	html += gen_html_body()
 	html += '</html>'
