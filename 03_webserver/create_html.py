@@ -24,23 +24,36 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def create_er_cal(r):
+def create_er_cal():
 	html = ''
+
+	earnings_bundle_str = g_rc.get('DASHBOARD:DATA:ERCAL:BUNDLE')
+	if earnings_bundle_str is None: return html
+	ercal = json.loads(earnings_bundle_str)
+
 	html += '<table>'
-	html += '<tr><th colspan=2 id=ercal>Upcoming Earnings Calendar</th></tr>'
-	for week in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
-		inner_html = r.get(f'DASHBOARD:DATA:ERCAL:{week}')
-		if inner_html is None: inner_html = ''
-		html += f'<tr><td>{week}</td><td class=ercal_symbols id=ercaldata_{week}>{inner_html}</td></tr>'
+
+	html += '<tr><th colspan=3>Upcoming Earnings Calendar</th></tr>'
+	for w in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
+		this_week = ercal[w]
+		if (len(this_week) == 0):
+			html += f'<tr><td>{w}</td><td></td><td></td></tr>'
+		else:
+			for k,v in this_week.items():
+				day = v['day']
+				symbols = v['symbols']
+				html += f'<tr><td>{w}</td><td>{k} {day}</td><td class=ercal_symbols>{symbols}</td></tr>'
+
 	html += '</table>'
 	return html
 
 def create_mini_cal():
+	html = ''
+
 	green_months_list = ['Jan', 'Jul']
 	red_months_list = ['Apr', 'Jun', 'Sep', 'Oct', 'Dec']
 	months_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-	html = ''
 	html += '<h3><div id=minical>'
 	html += '<table>'
 	html += f'<tr><th colspan=12 id=marketclock>MARKETCLOCK</th></tr>'
@@ -70,7 +83,8 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	html += f'<th><u>{table_name}</u></th>'
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
-		html += f'<th id={fsymb}_th><a href=https://finance.yahoo.com/quote/{fsymb}>{symb}</a></th>'
+		yfsymb = fsymb.replace('^','%5E')
+		html += f'<th id={fsymb}_th><a href=https://finance.yahoo.com/quote/{yfsymb}>{symb}</a></th>'
 	html += '</tr>'
 
 	html += '<tr>'
@@ -148,21 +162,70 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 		html += '<tr>'
 		html += '<td>URLS</td>'
 		for symb in symbols_list:
-			yfsymb = symb.replace('/','-')
-			gfsymb = symb.replace('/','-')
+			yfsymb = symb.replace('/','-').replace('^','%5E')
+			gfsymb = symb.replace('/','-').replace('^','%5E')
 			html += f'<td><a href=https://finance.yahoo.com/quote/{yfsymb}>YF</a>/<a href=https://gurufocus.com/stock/{gfsymb}>GF</a></td>'
 		html += '</tr>'
 
 	html += '</table>'
-	html += '</br>'
 	return html
 
-def gen_html_head(cfg):
-	dash_config = cfg['DASHBOARD_CONFIG']
+def get_total_symbols():
+	stocks_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:STOCKS')
+	crypto_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:CRYPTO')
+	index_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:ETF')
+	future_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:FUTURE')
+	return int(stocks_count) + int(crypto_count) + int(index_count) + int(etf_count) + int(future_count)
+
+def gen_html_body():
+#	Get total count of symbols we are tracking
+	symbols_count = get_total_symbols()
+
+	html = '<body>'
+	html += '<center>'
+	html += f'<h2>Stonk Stalker ({symbols_count} Symbols)</h2>'
+
+	dc = g_cfg['DASHBOARD_CONFIG']
+	if dc['DISPLAY_MINI_CALENDAR']:
+		html += create_mini_cal()
+		html += create_er_cal()
+	else:
+		html += '<h3><div id=time></div></h3>'
+
+#	Horizontal Seperator
+	html += '<hr>'
+
+	for k,v in g_cfg.items():
+		if k.startswith('TABLE_'):
+			table_name = v['TABLENAME']
+			table_type = v['TABLETYPE']
+			if (table_type == 'index'):
+				key = f'DASHBOARD:TABLES:INDEX:{table_name}'
+			if (table_type == 'etf'):
+				key = f'DASHBOARD:TABLES:ETF:{table_name}'
+			if (table_type == 'future'):
+				key = f'DASHBOARD:TABLES:FUTURE:{table_name}'
+			if (table_type == 'crypto'):
+				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
+			if (table_type == 'stock'):
+				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
+			symbols_str = g_rc.get(key)
+			html += gen_html_table(k, table_name, table_type, symbols_str, dc)
+			html += '<br>'
+
+	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
+	html += '</center>'
+	html += '</body>'
+	return html
+
+def gen_html_head():
+	dash_config = g_cfg['DASHBOARD_CONFIG']
 	json_fetch_interval = dash_config['JSON_FETCH_INTERVAL']
 	dashboard_theme = dash_config['THEME']
 
 	html = '<head>'
+	html += '<meta charset=utf-8>'
 	html += '<title>Stonk Stalker</title>'
 	if (dashboard_theme == 'dark'):
 		html += '<link rel="stylesheet" href="static/dashboard-dark.css">'
@@ -177,59 +240,11 @@ def gen_html_head(cfg):
 	html += '</head>'
 	return html
 
-def get_total_symbols(r):
-	stocks_count = r.scard('DASHBOARD:SYMBOLS_SET:STOCKS')
-	crypto_count = r.scard('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	index_count = r.scard('DASHBOARD:SYMBOLS_SET:INDEX')
-	etf_count = r.scard('DASHBOARD:SYMBOLS_SET:ETF')
-	future_count = r.scard('DASHBOARD:SYMBOLS_SET:FUTURE')
-	return int(stocks_count) + int(crypto_count) + int(index_count) + int(etf_count) + int(future_count)
-
-def gen_html_body(r, cfg):
-#	Get total count of symbols we are tracking
-	symbols_count = get_total_symbols(r)
-
-	html = '<body>'
-	html += '<center>'
-	html += f'<h2>Stonk Stalker ({symbols_count} Symbols)</h2>'
-
-	dc = cfg['DASHBOARD_CONFIG']
-	if dc['DISPLAY_MINI_CALENDAR']:
-		html += create_mini_cal()
-		html += create_er_cal(r)
-	else:
-		html += '<h3><div id=time></div></h3>'
-
-#	Horizontal Seperator
-	html += '<hr>'
-
-	for k,v in cfg.items():
-		if k.startswith('TABLE_'):
-			table_name = v['TABLENAME']
-			table_type = v['TABLETYPE']
-			if (table_type == 'index'):
-				key = f'DASHBOARD:TABLES:INDEX:{table_name}'
-			if (table_type == 'etf'):
-				key = f'DASHBOARD:TABLES:ETF:{table_name}'
-			if (table_type == 'future'):
-				key = f'DASHBOARD:TABLES:FUTURE:{table_name}'
-			if (table_type == 'crypto'):
-				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
-			if (table_type == 'stock'):
-				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
-			symbols_str = r.get(key)
-			html += gen_html_table(k, table_name, table_type, symbols_str, dc)
-
-	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
-	html += '</center>'
-	html += '</body>'
-	return html
-
-def gen_index_html(r, cfg):
+def gen_index_html():
 	html = '<!DOCTYPE html>'
-	html += '<html lang="en">'
-	html += gen_html_head(cfg)
-	html += gen_html_body(r, cfg)
+	html += '<html lang=en>'
+	html += gen_html_head()
+	html += gen_html_body()
 	html += '</html>'
 	write_to_file(html, 'index.html')
 
@@ -253,10 +268,10 @@ def acquire_environment():
 
 if __name__ == '__main__':
 	redis_url = acquire_environment()
-	r = connect_to_redis(redis_url, True, False, g_debug_python)
+	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
 
-	wait_for_ready(r, 'DASHBOARD:READY', 0.1)
+	wait_for_ready(g_rc, 'DASHBOARD:READY', 0.1)
 
-	cfg_str = r.get('DASHBOARD:CONFIG')
-	ss_config = json.loads(cfg_str)
-	gen_index_html(r, ss_config)
+	cfg_str = g_rc.get('DASHBOARD:CONFIG')
+	g_cfg = json.loads(cfg_str)
+	gen_index_html()

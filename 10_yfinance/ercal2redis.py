@@ -24,6 +24,16 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
+def print_bundle():
+	for w in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
+		this_week = g_earnings_bundle[w]
+		if (len(this_week) == 0):
+			print(w)
+		else:
+			for k,v in this_week.items():
+				print(w, v['day'], k, v['symbols'])
+		print()
+
 def calc_days_until(target_date, ref_date):
 	diff = f'{target_date-ref_date}'
 	if diff == '0:00:00': diff_str = '0 days'
@@ -36,10 +46,9 @@ def update_earnings_report_by_date_dict(symbol, report_date_str):
 #	Limit our catalog to relevant earnings reports (6w from the reference Sunday)
 	report_date = datetime.date.fromisoformat(report_date_str)
 	days_away_int = calc_days_until(report_date, g_sunday)
-	if (days_away_int < 0) or (days_away_int > 42):
-		return
+	if (days_away_int < 0) or (days_away_int > 42): return
 
-	if report_date_str not in g_earnings_cal_by_date:
+	if (report_date_str not in g_earnings_cal_by_date):
 		g_earnings_cal_by_date[report_date_str] = []
 
 	date_list = g_earnings_cal_by_date[report_date_str]
@@ -59,7 +68,7 @@ def get_sunday_reference():
 		days_offest = -1*(day_num_of_week+1)
 
 	sunday = g_today + datetime.timedelta(days=days_offest)
-	print(f'Today:  {g_today}\nSunday: {sunday}\n')
+	if g_debug_python: print(f'Today:  {g_today}\nSunday: {sunday}\n', flush=True)
 	return sunday
 
 def which_day_of_week(report_date):
@@ -75,8 +84,7 @@ def which_day_of_week(report_date):
 
 # pr means past report (-1 days away or more)
 def save_week(start, stop, week):
-	key = f'DASHBOARD:DATA:ERCAL:{week}'
-	print(key)
+	this_week = {}
 
 	this_week_cell_data = ''
 	for i in range(start, stop):
@@ -93,11 +101,26 @@ def save_week(start, stop, week):
 		report_date_str = report_date.strftime('%Y-%m-%d')
 		if report_date_str in g_earnings_cal_by_date:
 			symbols_reporting = g_earnings_cal_by_date[report_date_str]
-			print(f'{report_date_str}: {symbols_reporting}')
-			this_week_cell_data += f'{day_of_week} {report_date_str}: ' + ', '.join(symbols_reporting) + '</br>'
+			symbols_reporting_str = ', '.join(symbols_reporting)
+			this_week[report_date_str] = { 'day':day_of_week, 'symbols':symbols_reporting_str }
 
-	print()
-	r.set(key, this_week_cell_data)
+	g_earnings_bundle[week] = this_week
+
+# Loop through all the keys from YFINANCE:CALENDAR:STOCK:*
+# and extract and process earnings dates
+def process_ticker(key):
+	symbol = key.split(':')[3]
+	edates_str = g_rc.get(key)
+	if edates_str is None:
+		if g_debug_python: print(f'None: {symbol}', flush=True)
+		return
+	edates_list = json.loads(edates_str)
+	if(len(edates_list) == 0):
+		if g_debug_python: print(f'Empty: {symbol}', flush=True)
+		return
+
+	report_date_str = edates_list[0]
+	update_earnings_report_by_date_dict(symbol, report_date_str)
 
 def acquire_environment():
 	global g_debug_python
@@ -116,33 +139,31 @@ def acquire_environment():
 
 if __name__ == '__main__':
 	redis_url = acquire_environment()
-	r = connect_to_redis(redis_url, True, False, g_debug_python)
+	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
 
 	now_et_str = datetime.datetime.now(g_tz_et).strftime('%Y-%m-%d')
 	g_today = datetime.date.fromisoformat(now_et_str)
 
-	g_sunday = get_sunday_reference()
+	g_earnings_bundle = {}
 	g_earnings_cal_by_date = {}
+	g_sunday = get_sunday_reference()
 
 	searchpattern = f'YFINANCE:CALENDAR:STOCK:*'
-	for key in sorted(r.scan_iter(searchpattern)):
-		symbol = key.split(':')[3]
-		edates_str = r.get(key)
-		if edates_str is None:
-#			print(f'None: {symbol}')
-			continue
-		edates_list = json.loads(edates_str)
-		if(len(edates_list) == 0):
-#			print(f'Empty: {symbol}')
-			continue
+	for key in sorted(g_rc.scan_iter(searchpattern)):
+		process_ticker(key)
 
-		report_date_str = edates_list[0]
-		update_earnings_report_by_date_dict(symbol, report_date_str)
-
-	save_week(0,   7, 'pr')
-	save_week(0,   7, '1w')
-	save_week(8,  14, '2w')
+#	Update/Organize Bundle
+	save_week( 0,  7, 'pr')
+	save_week( 0,  7, '1w')
+	save_week( 8, 14, '2w')
 	save_week(15, 21, '3w')
 	save_week(22, 28, '4w')
 	save_week(29, 35, '5w')
 	save_week(36, 42, '6w')
+
+#	Save Bundle
+	bundle_str = json.dumps(g_earnings_bundle)
+	g_rc.set('DASHBOARD:DATA:ERCAL:BUNDLE', bundle_str)
+
+#	Print Bundle
+	print_bundle()
