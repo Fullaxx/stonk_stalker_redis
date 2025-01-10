@@ -219,8 +219,8 @@ def gen_html_body():
 	if dc['PAGE_HEADER_TYPE'] == 'calendars':
 		html += create_mini_cal()
 		html += '<br>'
-		html += f'<button onclick=toggleHidden("ercalgrid") type="button">Toggle Grid</button>'
-		html += f'<button onclick=toggleHidden("ercallist") type="button">Toggle List</button>'
+		html += f'<button onclick="toggleGridHidden()" type="button">Toggle Grid</button>'
+		html += f'<button onclick="toggleListHidden()" type="button">Toggle List</button>'
 		html += '<br>'
 		html += create_er_cal_list()
 		html += '<br>'
