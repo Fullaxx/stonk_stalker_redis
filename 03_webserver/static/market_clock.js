@@ -7,8 +7,8 @@ rounding info: https://stackoverflow.com/questions/15762768/javascript-math-roun
 function market_clock_update() {
   now = new Date(new Date().toLocaleString('en', {timeZone: 'America/New_York'}))
   a = now.toString().split(' ');
-  time_str = 'Current Time: ' + a[0] + ' ' + a[1] + ' ' + a[2] + ' ' + a[3] + ' ' + a[4] + ' US/Eastern'
-  //console.log(time_str)
+  time_str = 'Current Time: ' + a[0] + ' ' + a[1] + ' ' + a[2] + ' ' + a[3] + ' ' + a[4] + ' US/Eastern';
+  //console.log(time_str);
   $('[id="marketclock"]').html(time_str);
 }
 
@@ -26,12 +26,12 @@ function update_market_status()
 {
   $.get('market_data/market_status.json', function(data) {
     const market_status = JSON.parse(data);
-    //console.log(jsonobj)
-    is_open = market_status['is_open']
+    //console.log(jsonobj);
+    is_open = market_status['is_open'];
     if (is_open) {
-      status_str='Market: Open (Closes @ ' + market_status['next_close'] + ')'
+      status_str='Market: Open (Closes @ ' + market_status['next_close'] + ')';
     } else {
-      status_str='Market: Closed (Opens @ ' + market_status['next_open'] + ')'
+      status_str='Market: Closed (Opens @ ' + market_status['next_open'] + ')';
     }
     $('[id="marketstatus"]').html(status_str);
   }).fail(function(xhr, status, error) {

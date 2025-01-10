@@ -101,7 +101,7 @@ function cell_update(info, datatag)
   if(!td) { return; }
 
   // Default value
-  data = ''
+  data = '';
 
   if(datatag == 'pbRatio') {
     if(typeof(info.bookValue) == "number") {
@@ -133,13 +133,13 @@ function update_symbol(obj)
   header_update(obj);
   move_update(obj);
   mcap_update(obj);
-  cell_update(obj, 'dtr')
-  cell_update(obj, 'pbRatio')
-  cell_update(obj, 'forwardPE')
-  cell_update(obj, 'currentPrice')
-  cell_update(obj, 'previousClose')
-  cell_update(obj, 'trailingPegRatio')
-  cell_update(obj, 'priceToSalesTrailing12Months')
+  cell_update(obj, 'dtr');
+  cell_update(obj, 'pbRatio');
+  cell_update(obj, 'forwardPE');
+  cell_update(obj, 'currentPrice');
+  cell_update(obj, 'previousClose');
+  cell_update(obj, 'trailingPegRatio');
+  cell_update(obj, 'priceToSalesTrailing12Months');
 }
 
 function update_market_data_via_getJSON()
@@ -150,8 +150,8 @@ function update_market_data_via_getJSON()
     //console.log(data)
     for (let key in data) {
       //console.log(key, data[key]);
-      symbobj = data[key]
-      update_symbol(symbobj)
+      symbobj = data[key];
+      update_symbol(symbobj);
     }
   }).fail(function(xhr, status, error) {
     console.log('getJSON() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
@@ -163,8 +163,8 @@ function update_market_data_via_object()
   $.get('market_data/marketdb.json', function(data) {
     const jsonobj = JSON.parse(data);
     for (let key in jsonobj) {
-      symbobj = jsonobj[key]
-      update_symbol(symbobj)
+      symbobj = jsonobj[key];
+      update_symbol(symbobj);
     }
   }).fail(function(xhr, status, error) {
     console.log('get() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
@@ -176,8 +176,8 @@ function update_market_data_via_list()
   $.get('market_data/marketlist.json', function(data) {
     const jsonarray = JSON.parse(data);
     for (i in jsonarray) {
-      symbobj = jsonarray[i]
-      update_symbol(symbobj)
+      symbobj = jsonarray[i];
+      update_symbol(symbobj);
     }
   }).fail(function(xhr, status, error) {
     console.log('get() FAILED! ' + status + ' ' + error + ' ' + xhr.status + ' ' + xhr.statusText);
