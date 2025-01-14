@@ -4,8 +4,10 @@ import os
 import sys
 import zmq
 import json
+import pytz
 import redis
 import signal
+import datetime
 #import traceback
 #from pprint import pprint
 
@@ -41,38 +43,61 @@ def dashboard_save(key, val):
 	else:
 		eprint(f'SET {key:<40} FAILED!')
 
-def update_prevclose(src, symbol, pc):
+def analyze_time(rmt, etzn):
+	exchange_zone = pytz.timezone(etzn)
+	rmt_dt = datetime.datetime.fromtimestamp(rmt, tz=exchange_zone)
+	rmt_z = rmt_dt.astimezone(pytz.UTC)
+	now_z = datetime.datetime.now(pytz.UTC)
+	rmt_zstamp = int(rmt_z.timestamp())
+	now_zstamp = int(now_z.timestamp())
+#	delta = now_dt - rmt_dt
+#	seconds_ago = delta.total_seconds()
+	seconds_ago = now_zstamp - rmt_zstamp
+	print(f'{rmt_dt} was {seconds_ago} seconds ago')
+
+def update_prevclose(src, symbol, pc, rmt, etzn):
+	analyze_time(rmt, etzn)
 	if symbol in g_non_stock_symbols_set:
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
 		dashboard_save(key, pc)
 
-def update_price(src, symbol, cp):
+def update_price(src, symbol, cp, rmt, etzn):
+	analyze_time(rmt, etzn)
 	if symbol in g_non_stock_symbols_set:
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 		dashboard_save(key, cp)
 
-def process_spark(resultarray):
-	src = 'spark'
-	for item in resultarray:
-		this_symbol = item['symbol'].replace('-','/')
-		resp_array = item['response']
-		for r in resp_array:
-			if 'meta' in r:
-				m = r['meta']
-				if 'regularMarketPrice' in m:
-					cp = m['regularMarketPrice']
-					update_price(src, this_symbol, cp)
+def process_spark_item(src, item):
+	rmt = None
+	etzn = None
+	this_symbol = item['symbol'].replace('-','/')
+	resp_array = item['response']
+	for r in resp_array:
+		rmt = None
+		if 'meta' in r:
+			m = r['meta']
+			if 'exchangeTimezoneName' in m:
+				etzn = m['exchangeTimezoneName']
+			if 'regularMarketTime' in m:
+				rmt = m['regularMarketTime']
+			if 'regularMarketPrice' in m:
+				cp = m['regularMarketPrice']
+				update_price(src, this_symbol, cp, rmt, etzn)
 
-def process_quote_response(resultarray):
-	src = 'quote'
-	for item in resultarray:
-		this_symbol = item['symbol'].replace('-','/')
-		if 'regularMarketPrice' in item:
-			cp = item['regularMarketPrice']['raw']
-			update_price(src, this_symbol, cp)
-		if 'regularMarketPreviousClose' in item:
-			pc = item['regularMarketPreviousClose']['raw']
-			update_prevclose(src, this_symbol, pc)
+def process_quote_item(src, item):
+	rmt = None
+	etzn = None
+	this_symbol = item['symbol'].replace('-','/')
+	if 'exchangeTimezoneName' in item:
+		etzn = item['exchangeTimezoneName']
+	if 'regularMarketTime' in item:
+		rmt = item['regularMarketTime']['raw']
+	if 'regularMarketPrice' in item:
+		cp = item['regularMarketPrice']['raw']
+		update_price(src, this_symbol, cp, rmt, etzn)
+	if 'regularMarketPreviousClose' in item:
+		pc = item['regularMarketPreviousClose']['raw']
+		update_prevclose(src, this_symbol, pc, rmt, etzn)
 
 def process_body(body_str):
 	quote = json.loads(body_str)
@@ -80,12 +105,14 @@ def process_body(body_str):
 		resp = quote['quoteResponse']
 		if (resp['error'] == None):
 			quoteResponseResultArray = resp['result']
-			process_quote_response(quoteResponseResultArray)
+			for item in quoteResponseResultArray:
+				process_quote_item('quote', item)
 	if ('spark' in quote):
 		spark = quote['spark']
 		if (spark['error'] == None):
 			sparkResultArray = spark['result']
-			process_spark(sparkResultArray)
+			for item in sparkResultArray:
+				process_spark_item('spark', item)
 
 def process_resource(requested_symbol, resource_str):
 	resource = json.loads(resource_str)
