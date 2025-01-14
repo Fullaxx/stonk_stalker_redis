@@ -32,6 +32,7 @@ def write_to_file(text, filename):
 		f.close()
 
 def prepare_symbol(r, symbol):
+	nan_flags = ('n', 'N')
 	fsymb = symbol.replace('/','-')
 #	What happenes if we default these to NULL?
 	symb_dict = {
@@ -61,7 +62,10 @@ def prepare_symbol(r, symbol):
 		symb_dict['forwardPE'] = fpe_str
 
 	currentPrice = r.get(f'DASHBOARD:DATA:CURRENTPRICE:{symbol}')
-	if currentPrice is not None: symb_dict['currentPrice'] = float(currentPrice)
+	if currentPrice is not None:
+		if (not currentPrice.startswith(nan_flags)):
+			symb_dict['currentPrice'] = float(currentPrice)
+
 	previousClose = r.get(f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}')
 	if previousClose is not None: symb_dict['previousClose'] = float(previousClose)
 	marketCap = r.get(f'DASHBOARD:DATA:MARKETCAP:{symbol}')

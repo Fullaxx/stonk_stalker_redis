@@ -105,7 +105,9 @@ function cell_update(info, datatag)
 
   if(datatag == 'pbRatio') {
     if(typeof(info.bookValue) == "number") {
-      data = info.currentPrice / info.bookValue;
+      if(typeof(info.currentPrice) == "number") {
+        data = info.currentPrice / info.bookValue;
+      }
     }
   } else if(datatag == 'trailingPegRatio') {
     data = info.trailingPegRatio;
