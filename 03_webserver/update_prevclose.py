@@ -35,11 +35,14 @@ def acquire_environment():
 
 if __name__ == '__main__':
 	redis_url = acquire_environment()
-	r = connect_to_redis(redis_url, True, False, g_debug_python)
+	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
 
 #	Grab the CURRENTPRICE value and set PREVIOUSCLOSE to it
 	searchpattern = f'DASHBOARD:DATA:CURRENTPRICE:*'
 	for key in sorted(r.scan_iter(searchpattern)):
-		cp = r.get(key)
+		cp = g_rc.get(key)
+		if cp is None: continue
 		symbol = key.split(':')[3]
-		r.set(f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}', cp)
+		prev_close_key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		print(f'Setting {prev_close_key} to ${cp}: ', flush=True)
+		g_rc.set(prev_close_key, cp)

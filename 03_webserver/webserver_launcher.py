@@ -41,8 +41,8 @@ def launch_script(path, verbose):
 		print(f'{timestamp_str}: {path}', flush=True)
 	os.system(path)
 
-#	Get the most recent value for ALPACA:MARKET:NEXTOPEN:ZSTAMP from redis
-#	If it has changed, print a message and update g_nextopen_zs
+# Get the most recent value for ALPACA:MARKET:NEXTOPEN:ZSTAMP from redis
+# If it has changed, print a message and update g_nextopen_zs
 def update_next_open():
 	global g_nextopen_zs
 
@@ -58,15 +58,13 @@ def update_next_open():
 		nextopen_et = nextopen_z.astimezone(g_tz_et)
 		print(f'{log_timestamp_str}: next_open={g_nextopen_zs} {nosa} seconds away @ {nextopen_et}', flush=True)
 
-#	Calculate how far away we are from the market open using g_next_open_timestamp
-#	If we are within 1 second, launch ./update_prevclose.py
+# Calculate how far away we are from the market open using g_next_open_timestamp
+# If we are within 1 second, launch ./update_prevclose.py
 def prepare_for_upcoming_market_open():
-	global g_nextopen_zs
-	if (g_nextopen_zs == 0): return
 	nosa = g_nextopen_zs - g_now_s
 	if g_debug_python:
 		print(f'{nosa} seconds away')
-	if (nosa == 1):
+	if (nosa == 4):
 		launch_script('./update_prevclose.py', True)
 
 def every_hour():
@@ -87,7 +85,7 @@ def every_second():
 		launch_script('./create_market_data_json.py', False)
 		g_last_mdjc_trigger = g_now_s
 
-#	Load MARKET_DATA_CREATE_INTERVAL from config
+# Load MARKET_DATA_CREATE_INTERVAL from config
 def load_market_json_creation_interval():
 	cfg_str = g_rc.get('DASHBOARD:CONFIG')
 	ss_config = json.loads(cfg_str)
