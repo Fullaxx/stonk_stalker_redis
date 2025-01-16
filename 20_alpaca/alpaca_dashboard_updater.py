@@ -36,9 +36,11 @@ def signal_handler(sig, frame):
 	global g_shutdown
 	g_shutdown = True
 
-def alpaca_dashboard_save_currentprice(symbol, cp):
+def alpaca_dashboard_save_currentprice(symbol, cp, channel):
 #	Dont update current price during extended hours
-	if not g_market_is_open: return
+	if (channel == 'SOURCE:ALPACA:STOCKUPDATE'):
+		if not g_market_is_open:
+			return
 
 	key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 	result = g_rc.set(key, cp)
@@ -47,40 +49,40 @@ def alpaca_dashboard_save_currentprice(symbol, cp):
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
-def alpaca_handle_new_trade(key, symbol):
+def alpaca_handle_new_trade(key, symbol, channel):
 	val = g_rc.get(key)
 	trade = json.loads(val)
 	price = trade['p']
-	alpaca_dashboard_save_currentprice(symbol, price)
+	alpaca_dashboard_save_currentprice(symbol, price, channel)
 
 # We are ignoring quotes at the moment
-def alpaca_handle_new_quote(key, symbol):
+def alpaca_handle_new_quote(key, symbol, channel):
 	val = g_rc.get(key)
 	quote = json.loads(val)
 	bid_price = quote['bp']
 	ask_price = quote['ap']
-#	alpaca_dashboard_save_currentprice(symbol, bid_price)
+#	alpaca_dashboard_save_currentprice(symbol, bid_price, channel)
 
-def alpaca_handle_new_1minbar(key, symbol):
+def alpaca_handle_new_1minbar(key, symbol, channel):
 	val = g_rc.get(key)
 	bar = json.loads(val)
 	cp = bar['c']
-	alpaca_dashboard_save_currentprice(symbol, cp)
+	alpaca_dashboard_save_currentprice(symbol, cp, channel)
 
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:TRADE:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:QUOTE:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:1MINBARS:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:ALPACA:UPDATED',   'data': 'ALPACA:DAILYBARS:{symbol}'}
 def handle_channel_message(msg_obj):
-#	print(msg_obj['channel'])
 	key = msg_obj['data']
 	symbol = key.split(':')[2]
+	channel = msg_obj['channel']
 	if key.startswith('ALPACA:1MINBARS:'):
-		alpaca_handle_new_1minbar(key, symbol)
+		alpaca_handle_new_1minbar(key, symbol, channel)
 	if key.startswith('ALPACA:QUOTE:'):
-		alpaca_handle_new_quote(key, symbol)
+		alpaca_handle_new_quote(key, symbol, channel)
 	if key.startswith('ALPACA:TRADE:'):
-		alpaca_handle_new_trade(key, symbol)
+		alpaca_handle_new_trade(key, symbol, channel)
 
 def channel_handler(msg_obj):
 	if (msg_obj['type'] == 'message'):
@@ -109,7 +111,8 @@ if __name__ == '__main__':
 	g_market_is_open = is_market_open(g_rc, 0.1)
 
 	p = g_rc.pubsub()
-	p.subscribe(f'SOURCE:ALPACA:UPDATED')
+	channles = ['SOURCE:ALPACA:STOCKUPDATE', 'SOURCE:ALPACA:CRYPTOUPDATE']
+	p.subscribe(channles)
 
 	signal.signal(signal.SIGINT,  signal_handler)
 	signal.signal(signal.SIGTERM, signal_handler)
