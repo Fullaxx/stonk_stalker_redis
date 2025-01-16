@@ -15,10 +15,8 @@ import os
 import sys
 import rel
 import time
-import pytz
 import json
 import redis
-#import datetime
 import websocket
 
 sys.path.append('.')
@@ -74,7 +72,8 @@ def bailmsg(*args, **kwargs):
 
 def publish_message(symbol, key):
 #	Publish a message indicating an update to specified symbol
-	channel = f'SOURCE:ALPACA:UPDATED'
+	if (g_exchange == 'CRYPTO'): channel = f'SOURCE:ALPACA:CRYPTOUPDATE'
+	if (g_exchange ==  'STOCK'): channel = f'SOURCE:ALPACA:STOCKUPDATE'
 	message = f'{key}'
 	g_rc.publish(channel, message)
 
@@ -233,9 +232,7 @@ def on_open(ws):
 	print('Connection: Opened', flush=True)
 
 def acquire_environment():
-	global g_etz, g_apikey, g_secret, g_exchange, g_minute_bars, g_daily_bars, g_wait_for_ready, g_debug_python
-
-	g_etz = pytz.timezone('US/Eastern')
+	global g_apikey, g_secret, g_exchange, g_minute_bars, g_daily_bars, g_wait_for_ready, g_debug_python
 
 	redis_url = os.getenv('REDIS_URL')
 	if redis_url is None: bailmsg('Set REDIS_URL')
