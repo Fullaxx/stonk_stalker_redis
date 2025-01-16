@@ -2,6 +2,21 @@
 import time
 import redis
 
+def is_market_open(r, interval):
+	key = f'ALPACA:MARKET:STATUS:TEXT'
+	market_status_text = r.get(key)
+	while market_status_text is None:
+		print('Waiting on {key} ...', flush=True)
+		time.sleep(interval)
+		market_status_text = r.get('ALPACA:MARKET:STATUS:TEXT')
+
+	if (market_status_text == 'open'):
+		is_market_open = True
+	else:
+		is_market_open = False
+
+	return is_market_open
+
 def wait_for_ready(r, key, interval):
 	ready = r.exists(key)
 	while not ready:
