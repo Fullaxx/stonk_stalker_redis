@@ -39,7 +39,7 @@ if __name__ == '__main__':
 
 #	Grab the CURRENTPRICE value and set PREVIOUSCLOSE to it
 	searchpattern = f'DASHBOARD:DATA:CURRENTPRICE:*'
-	for key in sorted(r.scan_iter(searchpattern)):
+	for key in sorted(g_rc.scan_iter(searchpattern)):
 		cp = g_rc.get(key)
 		if cp is None: continue
 		symbol = key.split(':')[3]

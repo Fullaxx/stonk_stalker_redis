@@ -4,8 +4,8 @@
 import os
 import sys
 import json
-#import time
 import redis
+
 import yfinance as yf
 
 sys.path.append('.')
@@ -23,16 +23,16 @@ def bailmsg(*args, **kwargs):
 
 def get_mcap_value_yf(symbol):
 	retval = 0
-	symbol = symbol.replace('/','-')
+	yf_symbol = symbol.replace('/','-')
 	try:
-		res = yf.Ticker(symbol)
+		res = yf.Ticker(yf_symbol)
 	except:
 		pass
 	else:
 		if 'marketCap' in res.info:
 			retval = res.info['marketCap']
 		else:
-			eprint(f'{symbol} has no marketCap object')
+			eprint(f'{yf_symbol} has no marketCap object')
 
 	return retval
 
