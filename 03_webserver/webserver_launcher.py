@@ -67,18 +67,24 @@ def prepare_for_upcoming_market_open():
 	if (nosa == 4):
 		launch_script('./update_prevclose.py', True)
 
-def every_hour():
+def check_for_crypto_day_rollover():
+	hms = g_now_z.strftime('%H%M%S')
+	if (hms == '000000'):
+		launch_script('./update_prevclose.py --crypto', True)
+
+def every_60m():
 	launch_script('./create_html.py', True)
 
-def every_halfhour():
+def every_30m():
 	update_next_open()
 
-#def every_minute(g_now_z):
+#def every_60s():
 #	pass
 
-def every_second():
+def every_1s():
 	global g_last_mdjc_trigger
 
+	check_for_crypto_day_rollover()
 	prepare_for_upcoming_market_open()
 	launch_script('./create_market_status_json.py', False)
 	if (g_now_s >= (g_last_mdjc_trigger + g_market_json_creation_interval)):
@@ -148,27 +154,27 @@ if __name__ == '__main__':
 	signal.signal(signal.SIGTERM, signal_handler)
 	signal.signal(signal.SIGQUIT, signal_handler)
 
-	g_last_sec_trigger = 0
-#	g_last_min_trigger = 0
-	g_last_halfhour_trigger = 0
-	g_last_hour_trigger = 0
+	g_1s_trigger = 0
+#	g_60s_trigger = 0
+	g_30m_trigger = 0
+	g_60m_trigger = 0
 	while not g_shutdown:
 		g_now_z = datetime.datetime.now(g_tz_utc)
 		g_now_s = int(g_now_z.timestamp())
-		if (g_now_s > g_last_sec_trigger):
-			every_second()
-			g_last_sec_trigger = g_now_s
+		if (g_now_s > g_1s_trigger):
+			every_1s()
+			g_1s_trigger = g_now_s
 #		if ((g_now_s % 60) == 0):
-#			if (g_now_s > g_last_min_trigger):
-#				every_minute(g_now_z)
-#				g_last_min_trigger = g_now_s
+#			if (g_now_s > g_60s_trigger):
+#				every_60s()
+#				g_60s_trigger = g_now_s
 		if ((g_now_s % 1800) == 0):
-			if (g_now_s > g_last_halfhour_trigger):
-				every_halfhour()
-				g_last_halfhour_trigger = g_now_s
+			if (g_now_s > g_30m_trigger):
+				every_30m()
+				g_30m_trigger = g_now_s
 		if ((g_now_s % 3600) == 0):
-			if (g_now_s > g_last_hour_trigger):
-				every_hour()
-				g_last_hour_trigger = g_now_s
+			if (g_now_s > g_60m_trigger):
+				every_60m()
+				g_60m_trigger = g_now_s
 
 		usleep(1000)

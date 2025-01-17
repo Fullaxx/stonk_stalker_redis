@@ -5,6 +5,8 @@ import os
 import sys
 import redis
 
+from argparse import ArgumentParser
+
 sys.path.append('.')
 sys.path.append('/app')
 from redis_helpers import connect_to_redis
@@ -17,6 +19,15 @@ def eprint(*args, **kwargs):
 def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
+
+def update_prevclose(symbols_set):
+	for s in symbols_set:
+		key = f'DASHBOARD:DATA:CURRENTPRICE:{s}'
+		cp = g_rc.get(key)
+		if cp is None: continue
+		prev_close_key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{s}'
+		print(f'Setting {prev_close_key:<40} ${cp}', flush=True)
+		g_rc.set(prev_close_key, cp)
 
 def acquire_environment():
 	global g_debug_python
@@ -34,15 +45,24 @@ def acquire_environment():
 	return redis_url
 
 if __name__ == '__main__':
+	parser = ArgumentParser()
+	parser.add_argument('--crypto', '-c', required=False, default=False, action='store_true')
+	args = parser.parse_args()
+
 	redis_url = acquire_environment()
 	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
 
-#	Grab the CURRENTPRICE value and set PREVIOUSCLOSE to it
-	searchpattern = f'DASHBOARD:DATA:CURRENTPRICE:*'
-	for key in sorted(g_rc.scan_iter(searchpattern)):
-		cp = g_rc.get(key)
-		if cp is None: continue
-		symbol = key.split(':')[3]
-		prev_close_key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		print(f'Setting {prev_close_key} to ${cp}: ', flush=True)
-		g_rc.set(prev_close_key, cp)
+#	CRYPTO has no market close, and a 24 hr 'day'
+#	Which means their PREVIOUSCLOSE must be handled differently
+	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
+	if args.crypto:
+		update_prevclose(crypto_set)
+		sys.exit(0)
+
+#	Everything else runs on the NYSE market clock
+	stock_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
+	index_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
+	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
+	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
+	symbols_set = stock_set.union(index_set).union(etf_set).union(future_set)
+	update_prevclose(symbols_set)
