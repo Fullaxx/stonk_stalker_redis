@@ -91,10 +91,6 @@ def yfinance_handle_new_stock_info(r, key, symbol):
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
-	if 'marketCap' in info:
-		val = info['marketCap']
-		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
 	if 'bookValue' in info:
 		val = info['bookValue']
 		key = f'DASHBOARD:DATA:BOOKVALUE:{symbol}'
@@ -111,6 +107,14 @@ def yfinance_handle_new_stock_info(r, key, symbol):
 		val = info['priceToSalesTrailing12Months']
 		key = f'DASHBOARD:DATA:PRICETOSALESTRAILING12MONTHS:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
+	if 'sharesOutstanding' in info:
+		val = info['sharesOutstanding']
+		key = f'DASHBOARD:DATA:SHARESOUTSTANDING:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+	if 'marketCap' in info:
+		val = info['marketCap']
+		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
 
 def yfinance_handle_new_crypto_info(r, key, symbol):
 	val = r.get(key)
@@ -118,6 +122,10 @@ def yfinance_handle_new_crypto_info(r, key, symbol):
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		yfinance_dashboard_save(r, symbol, key, val)
+	if 'circulatingSupply' in info:
+		val = info['circulatingSupply']
+		key = f'DASHBOARD:DATA:CIRCULATINGSUPPLY:{symbol}'
 		yfinance_dashboard_save(r, symbol, key, val)
 	if 'marketCap' in info:
 		val = info['marketCap']
