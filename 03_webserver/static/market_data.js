@@ -26,7 +26,7 @@ function remove_all_color(e)
 function header_update(info)
 {
   symb = info.symbol
-  th = document.getElementById(symb + "_th");
+  th = document.getElementById(symb + '_th');
   if(!th) { return; }
   remove_all_color(th);
   if(info.currentPrice > info.previousClose) {
@@ -36,7 +36,7 @@ function header_update(info)
   }
 }
 
-function update_move_color(e, pct)
+function update_color(e, pct)
 {
        if(pct >=  8) { e.classList.add('pos_eight'); }
   else if(pct <= -8) { e.classList.add('neg_eight'); }
@@ -61,12 +61,14 @@ function update_move_color(e, pct)
 function move_update(info)
 {
   symb = info.symbol
-  td = document.getElementById(symb + "_move");
+  td = document.getElementById(symb + '_move');
   if(!td) { return; }
   remove_all_color(td);
+  if(typeof(info.previousClose) != 'number') { return; }
+  if(typeof(info.currentPrice) != 'number') { return; }
   move = (info.currentPrice - info.previousClose) / info.previousClose;
   move_pct = (move*100.0).toFixed(2);
-  update_move_color(td, move_pct);
+  update_color(td, move_pct);
   if(move_pct > 0) {
     move_str = '+' + move_pct + '%';
   } else {
@@ -75,10 +77,29 @@ function move_update(info)
   td.innerHTML = move_str;
 }
 
+function ytd_update(info)
+{
+  symb = info.symbol
+  td = document.getElementById(symb + '_ytd');
+  if(!td) { return; }
+  remove_all_color(td);
+  if(typeof(info.lastYearClose) != 'number') { return; }
+  if(typeof(info.currentPrice) != 'number') { return; }
+  ytd = (info.currentPrice - info.lastYearClose) / info.lastYearClose;
+  ytd_pct = (ytd*100.0).toFixed(2);
+  update_color(td, ytd_pct);
+  if(ytd_pct > 0) {
+    move_str = '+' + ytd_pct + '%';
+  } else {
+    move_str = ytd_pct + '%';
+  }
+  td.innerHTML = move_str;
+}
+
 function mcap_update(info)
 {
   symb = info.symbol
-  td = document.getElementById(symb + "_mcap");
+  td = document.getElementById(symb + '_mcap');
   if(!td) { return; }
   mcap = info.marketCap;
   if(mcap >= 1e12) {
@@ -104,11 +125,9 @@ function cell_update(info, datatag)
   data = '';
 
   if(datatag == 'pbRatio') {
-    if(typeof(info.bookValue) == "number") {
-      if(typeof(info.currentPrice) == "number") {
-        data = info.currentPrice / info.bookValue;
-      }
-    }
+    if(typeof(info.bookValue) != 'number') { return; }
+    if(typeof(info.currentPrice) != 'number') { return; }
+    data = info.currentPrice / info.bookValue;
   } else if(datatag == 'trailingPegRatio') {
     data = info.trailingPegRatio;
   } else if(datatag == 'priceToSalesTrailing12Months') {
@@ -123,9 +142,9 @@ function cell_update(info, datatag)
     data = info.dtr;
   }
 
-  if(typeof(data) == "number") {
+  if(typeof(data) == 'number') {
     td.innerHTML = data.toFixed(2);
-  } else if(typeof(data) == "string") {
+  } else if(typeof(data) == 'string') {
     td.innerHTML = data;
   }
 }
@@ -134,6 +153,7 @@ function update_symbol(obj)
 {
   header_update(obj);
   move_update(obj);
+  ytd_update(obj);
   mcap_update(obj);
   cell_update(obj, 'dtr');
   cell_update(obj, 'pbRatio');

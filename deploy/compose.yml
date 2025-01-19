@@ -49,7 +49,6 @@ services:
         condition: service_healthy
     environment:
      - REDIS_URL=redis://172.17.0.1:6379?db=0
-     - YFINANCE_REQUEST_INTERVAL=15
 
   alpaca:
     image: fullaxx/ss_alpaca

@@ -40,33 +40,39 @@ def signal_handler(sig, frame):
 	global g_shutdown
 	g_shutdown = True
 
-def yfinance_dashboard_save(r, symbol, key, val):
+def yfinance_dashboard_save(symbol, key, val):
 	if val is None:
 		eprint(f'{key} has NULL vlaue - NOT SETTING!')
 		return
 
-	result = r.set(key, val)
+	result = g_rc.set(key, val)
 	if result:
 		print(f'SET {key:<20} {val}', flush=True)
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
-def yfinance_handle_new_stock_dailyindicators(r, key, symbol):
-	val = r.get(key)
-	data = json.loads(val)
-	bb_lo = data['BB_LOWER']
-	bb_mid = data['BB_MID']
-	bb_hi = data['BB_UPPER']
-	bb_pct = data['BB_PCT']
+def yfinance_handle_new_stock_dailyindicators(key, symbol):
+	val = g_rc.get(key)
+	daily = json.loads(val)
+	lyc = daily['LASTYEARCLOSE']
+	key = f'DASHBOARD:DATA:LASTYEARCLOSE:{symbol}'
+	yfinance_dashboard_save(symbol, key, lyc)
+	bb_lo = daily['BB_LOWER']
+	bb_mid = daily['BB_MID']
+	bb_hi = daily['BB_UPPER']
+	bb_pct = daily['BB_PCT']
+	bb_width = daily['BB_WIDTH']
 	key = f'DASHBOARD:DATA:BBPCT:{symbol}'
-	yfinance_dashboard_save(r, symbol, key, bb_pct)
+	yfinance_dashboard_save(symbol, key, bb_pct)
+	key = f'DASHBOARD:DATA:BBWIDTH:{symbol}'
+	yfinance_dashboard_save(symbol, key, bb_width)
 
 # edates_list looks something like this:
 # ['2025-01-30']
 # ['2025-01-31', '2025-02-04']
-def yfinance_handle_new_stock_calendar(r, key, symbol):
+def yfinance_handle_new_stock_calendar(key, symbol):
 	dtr_str = ''
-	val = r.get(key)
+	val = g_rc.get(key)
 	edates_list = json.loads(val)
 	now_et_str = datetime.datetime.now(g_tz_et).strftime('%Y-%m-%d')
 	now_date = datetime.date.fromisoformat(now_et_str)
@@ -78,95 +84,95 @@ def yfinance_handle_new_stock_calendar(r, key, symbol):
 		if (i == 0): dtr_str = diff_str
 		else: dtr_str += f', {diff_str}'
 	key = f'DASHBOARD:DATA:DAYSTILLREPORT:{symbol}'
-	yfinance_dashboard_save(r, symbol, key, dtr_str)
+	yfinance_dashboard_save(symbol, key, dtr_str)
 
-def yfinance_handle_new_stock_info(r, key, symbol):
-	val = r.get(key)
+def yfinance_handle_new_stock_info(key, symbol):
+	val = g_rc.get(key)
 	info = json.loads(val)
 	if 'currentPrice' in info:
 		val = info['currentPrice']
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'bookValue' in info:
 		val = info['bookValue']
 		key = f'DASHBOARD:DATA:BOOKVALUE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'forwardPE' in info:
 		val = info['forwardPE']
 		key = f'DASHBOARD:DATA:FORWARDPE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'trailingPegRatio' in info:
 		val = info['trailingPegRatio']
 		key = f'DASHBOARD:DATA:TRAILINGPEGRATIO:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'priceToSalesTrailing12Months' in info:
 		val = info['priceToSalesTrailing12Months']
 		key = f'DASHBOARD:DATA:PRICETOSALESTRAILING12MONTHS:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'sharesOutstanding' in info:
 		val = info['sharesOutstanding']
 		key = f'DASHBOARD:DATA:SHARESOUTSTANDING:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'marketCap' in info:
 		val = info['marketCap']
 		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_crypto_info(r, key, symbol):
-	val = r.get(key)
+def yfinance_handle_new_crypto_info(key, symbol):
+	val = g_rc.get(key)
 	info = json.loads(val)
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'circulatingSupply' in info:
 		val = info['circulatingSupply']
 		key = f'DASHBOARD:DATA:CIRCULATINGSUPPLY:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'marketCap' in info:
 		val = info['marketCap']
 		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_index_info(r, key, symbol):
-	val = r.get(key)
+def yfinance_handle_new_index_info(key, symbol):
+	val = g_rc.get(key)
 	info = json.loads(val)
 	if 'bid' in info:
 		val = info['bid']
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_future_info(r, key, symbol):
-	val = r.get(key)
+def yfinance_handle_new_future_info(key, symbol):
+	val = g_rc.get(key)
 	info = json.loads(val)
 	if 'bid' in info:
 		val = info['bid']
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_etf_info(r, key, symbol):
-	val = r.get(key)
+def yfinance_handle_new_etf_info(key, symbol):
+	val = g_rc.get(key)
 	info = json.loads(val)
 	if 'navPrice' in info:
 		val = info['navPrice']
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 	if 'previousClose' in info:
 		val = info['previousClose']
 		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(r, symbol, key, val)
+		yfinance_dashboard_save(symbol, key, val)
 
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:CALENDAR:STOCK:{symbol}'}
@@ -175,28 +181,28 @@ def yfinance_handle_new_etf_info(r, key, symbol):
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:INDEX:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:FUTURE:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:ETF:{symbol}'}
-def handle_channel_message(r, p, msg_obj):
+def handle_channel_message(p, msg_obj):
 #	print(msg_obj['channel'])
 	key = msg_obj['data']
 	symbol = key.split(':')[3]
 	if key.startswith('YFINANCE:INFO:ETF:'):
-		yfinance_handle_new_etf_info(r, key, symbol)
+		yfinance_handle_new_etf_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:FUTURE:'):
-		yfinance_handle_new_future_info(r, key, symbol)
+		yfinance_handle_new_future_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:INDEX:'):
-		yfinance_handle_new_index_info(r, key, symbol)
+		yfinance_handle_new_index_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:CRYPTO:'):
-		yfinance_handle_new_crypto_info(r, key, symbol)
+		yfinance_handle_new_crypto_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:STOCK:'):
-		yfinance_handle_new_stock_info(r, key, symbol)
+		yfinance_handle_new_stock_info(key, symbol)
 	if key.startswith('YFINANCE:CALENDAR:STOCK:'):
-		yfinance_handle_new_stock_calendar(r, key, symbol)
+		yfinance_handle_new_stock_calendar(key, symbol)
 	if key.startswith('YFINANCE:DAILYINDICATORS:STOCK:'):
-		yfinance_handle_new_stock_dailyindicators(r, key, symbol)
+		yfinance_handle_new_stock_dailyindicators(key, symbol)
 
-def channel_handler(r, p, msg_obj):
+def channel_handler(p, msg_obj):
 	if (msg_obj['type'] == 'message'):
-		handle_channel_message(r, p, msg_obj)
+		handle_channel_message(p, msg_obj)
 	else:
 		print(msg_obj, flush=True)
 
@@ -217,8 +223,8 @@ def acquire_environment():
 
 if __name__ == "__main__":
 	redis_url = acquire_environment()
-	r = connect_to_redis(redis_url, True, False, g_debug_python)
-	p = r.pubsub()
+	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
+	p = g_rc.pubsub()
 	p.subscribe(f'SOURCE:YFINANCE:UPDATED')
 
 	signal.signal(signal.SIGINT,  signal_handler)
@@ -227,5 +233,5 @@ if __name__ == "__main__":
 
 	while not g_shutdown:
 		msg = p.get_message()
-		if msg: channel_handler(r, p, msg)
+		if msg: channel_handler(p, msg)
 		else: usleep(1000)
