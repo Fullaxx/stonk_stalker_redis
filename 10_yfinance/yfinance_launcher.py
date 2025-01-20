@@ -83,17 +83,18 @@ def every_5m():
 	os.system(f'./indices2redis.py')
 
 # Every minute that the market is closed, we will:
-# * call launch_ticker2redis() during the hours of 2000 - 0359
-# * call launch_indicators2redis() during the hours of 2000 - 2359
+# * call launch_ticker2redis()     if Sat or Sun or during the hours of 2000 - 0359
+# * call launch_indicators2redis() if Sat or Sun or during the hours of 2000 - 2359
 def every_60s():
 	if g_market_is_open: return
 
+	day = g_today.weekday()
 	hour = g_now_dt.strftime('%H')
 	ticker_hours = ('20','21','22','23','00','01','02','03')
-	if (hour.startswith(ticker_hours)):
+	if ((day > 4) or (hour.startswith(ticker_hours))):
 		launch_ticker2redis()
-	indicators_hours = ('20', '21', '22', '23')
-	if (hour.startswith(indicators_hours)):
+	indicators_hours = ('20','21','22','23')
+	if ((day > 4) or (hour.startswith(indicators_hours))):
 		launch_indicators2redis()
 
 def every_1s():
@@ -145,6 +146,7 @@ if __name__ == '__main__':
 	while not g_shutdown:
 		g_now_dt = datetime.datetime.now(g_tz_et)
 		g_now_s = int(g_now_dt.timestamp())
+		g_today = datetime.date.fromtimestamp(g_now_s)
 		if (g_now_s > g_1s_trigger):
 			every_1s()
 			g_1s_trigger = g_now_s
