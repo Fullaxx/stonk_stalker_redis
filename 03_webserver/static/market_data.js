@@ -140,6 +140,15 @@ function cell_update(info, datatag)
     data = info.currentPrice;
   } else if(datatag == 'dtr') {
     data = info.dtr;
+  } else if(datatag == 'bb') {
+    if(typeof(info.bbpct) == 'number') {
+      bbpval = info.bbpct * 100.0;
+      data = bbpval.toFixed(2).toString() + '%'
+    }
+  } else if(datatag == 'macd') {
+    data = info.macdh;
+  } else if(datatag == 'support') {
+    data = info.support;
   }
 
   if(typeof(data) == 'number') {
@@ -155,7 +164,10 @@ function update_symbol(obj)
   move_update(obj);
   ytd_update(obj);
   mcap_update(obj);
+  cell_update(obj, 'bb');
   cell_update(obj, 'dtr');
+  cell_update(obj, 'macd');
+  //cell_update(obj, 'support');
   cell_update(obj, 'pbRatio');
   cell_update(obj, 'forwardPE');
   cell_update(obj, 'currentPrice');

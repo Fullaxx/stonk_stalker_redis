@@ -142,6 +142,27 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 		html += f'<td id={fsymb}_ytd></td>'
 	html += '</tr>'
 
+	html += '<tr>'
+	html += '<td>BB</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id={fsymb}_bb></td>'
+	html += '</tr>'
+
+	html += '<tr>'
+	html += '<td>MACD</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id={fsymb}_macd></td>'
+	html += '</tr>'
+
+	html += '<tr>'
+	html += '<td>SUPPORT</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id={fsymb}_support></td>'
+	html += '</tr>'
+
 	if (table_type == 'stock') or (table_type == 'crypto'):
 		if dc['DISPLAY_MARKET_CAP']:
 			html += '<tr>'

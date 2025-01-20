@@ -121,6 +121,8 @@ def get_macro_indicators(filename, before_this_date):
 			if row_bb_pct: macro['BB_PCT'] = float(row_bb_pct)
 			row_bb_width = row.get('BBw')
 			if row_bb_width: macro['BB_WIDTH'] = float(row_bb_width)
+			row_macdh = row.get('MACDh')
+			if row_macdh: macro['MACD_HEIGHT'] = float(row_macdh)
 	macro['1Y_LOW'] = per_lo
 	macro['1Y_HIGH'] = per_hi
 	return macro
@@ -158,6 +160,7 @@ def gen_daily_csv(df, yf_symbol):
 	df.ta.cores = 0
 	df.ta.strategy(DailyStrategy)
 	df = rename_strategy_columns(df)
+	df['MACDh_diff'] =  df['MACDh'].diff()
 	df = df.round(decimals=2)
 	last_date = df.index.date[-1]
 	csv_filename = f'{yf_symbol}.{last_date}.1d.csv'
@@ -198,10 +201,6 @@ def gen_daily_indicators(yfdata, yf_symbol_list):
 
 	return macro_dict
 
-# Loop through each table and do the following:
-# 1) download a pickle
-# 2) generate daily indicators of each symbol in the table
-# 3) publish macro indicators for each symbol
 def process_table(table_name, val):
 	yf_symbols_list = []
 	symbols_list = val.split(',')
@@ -209,15 +208,17 @@ def process_table(table_name, val):
 		yf_symbol = s.replace('/','-')
 		yf_symbols_list.append(yf_symbol)
 
-	print(f'{table_name:<10} {val}')
+	print(f'{table_name:<10} {g_period:<3} {val}')
 
-	yfdata = yf.download(yf_symbols_list, period='1y', interval='1d', group_by='ticker', progress=False)
+	yfdata = yf.download(yf_symbols_list, period=g_period, interval='1d', group_by='ticker', progress=False)
 	macro_dict = gen_daily_indicators(yfdata, yf_symbols_list)
 	for k,v in macro_dict.items():
 		publish_daily_stats(k, v)
 
 def acquire_environment():
-	global g_debug_python
+	global g_period, g_debug_python
+
+	g_period = os.getenv('PERIOD', '1y')
 
 	redis_url = os.getenv('REDIS_URL')
 	if redis_url is None: bailmsg('Set REDIS_URL')
@@ -236,7 +237,8 @@ if __name__ == '__main__':
 	g_year = g_today.year
 
 	parser = ArgumentParser()
-	parser.add_argument('--key', '-k', type=str, required=True)
+	parser.add_argument('--key', '-k', type=str, required=False)
+	parser.add_argument('--tickers', '-t', type=str, required=False)
 	parser.add_argument('--dir', '-d', type=str, required=False)
 	args = parser.parse_args()
 
@@ -246,10 +248,18 @@ if __name__ == '__main__':
 	if args.dir:
 		os.chdir(args.dir)
 
-	key = args.key
-	val = g_rc.get(key)
-	if val is None: bailmsg(f'{key} returned None!')
+	if args.tickers:
+		process_table('{CMDLINE}', args.tickers)
+		sys.exit(0)
 
-	table_name = key.split(':')[-1]
-	table_name_formatted = table_name.replace('/','-')
-	process_table(table_name_formatted, val)
+	if args.key:
+		key = args.key
+		val = g_rc.get(key)
+		if val is None: bailmsg(f'{key} returned None!')
+
+		table_name = key.split(':')[-1]
+		table_name_formatted = table_name.replace('/','-')
+		process_table(table_name_formatted, val)
+		sys.exit(0)
+
+	bailmsg(f'I need something to process (Fix with -k/-t)')
