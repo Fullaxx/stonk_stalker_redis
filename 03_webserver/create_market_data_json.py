@@ -39,6 +39,9 @@ def prepare_symbol(symbol):
 	symb_dict = {
 		'symbol':yfsymb,
 		'dtr':'',
+		'bbpct':'',
+		'macdh':'',
+		'support':'',
 		'bookValue':'',
 		'forwardPE':'',
 		'marketCap':'',
@@ -67,6 +70,13 @@ def prepare_symbol(symbol):
 	if currentPrice is not None:
 		if (not currentPrice.startswith(nan_flags)):
 			symb_dict['currentPrice'] = float(currentPrice)
+
+	bbpct = g_rc.get(f'DASHBOARD:DATA:BBPCT:{symbol}')
+	if bbpct is not None: symb_dict['bbpct'] = float(bbpct)
+	macdh = g_rc.get(f'DASHBOARD:DATA:MACDHEIGHT:{symbol}')
+	if macdh is not None: symb_dict['macdh'] = float(macdh)
+	support = g_rc.get(f'DASHBOARD:DATA:SUPPORT:{symbol}')
+	if support is not None: symb_dict['support'] = float(support)
 
 	marketCap = g_rc.get(f'DASHBOARD:DATA:MARKETCAP:{symbol}')
 	if marketCap is not None: symb_dict['marketCap'] = float(marketCap)

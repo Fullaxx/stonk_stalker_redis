@@ -66,6 +66,9 @@ def yfinance_handle_new_stock_dailyindicators(key, symbol):
 	yfinance_dashboard_save(symbol, key, bb_pct)
 	key = f'DASHBOARD:DATA:BBWIDTH:{symbol}'
 	yfinance_dashboard_save(symbol, key, bb_width)
+	macd_height = daily['MACD_HEIGHT']
+	key = f'DASHBOARD:DATA:MACDHEIGHT:{symbol}'
+	yfinance_dashboard_save(symbol, key, macd_height)
 
 # edates_list looks something like this:
 # ['2025-01-30']
