@@ -150,7 +150,13 @@ function cell_update(info, datatag)
   } else if(datatag == 'support') {
     data = info.support;
   } else if(datatag == 'sma200') {
+    if(typeof(info.sma200) != 'number') { return; }
+    if(typeof(info.currentPrice) != 'number') { return; }
     data = info.sma200;
+    td.classList.remove('neg_eight');
+    if (info.currentPrice <= info.sma200) {
+       td.classList.add('neg_eight');
+    }
   }
 
   if(typeof(data) == 'number') {
@@ -169,7 +175,7 @@ function update_symbol(obj)
   cell_update(obj, 'bb');
   cell_update(obj, 'dtr');
   cell_update(obj, 'macd');
-  //cell_update(obj, 'sma200');
+  cell_update(obj, 'sma200');
   //cell_update(obj, 'support');
   cell_update(obj, 'pbRatio');
   cell_update(obj, 'forwardPE');

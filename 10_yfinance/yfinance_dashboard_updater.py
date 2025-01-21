@@ -57,6 +57,9 @@ def yfinance_handle_new_stock_dailyindicators(key, symbol):
 	lyc = daily['LASTYEARCLOSE']
 	key = f'DASHBOARD:DATA:LASTYEARCLOSE:{symbol}'
 	yfinance_dashboard_save(symbol, key, lyc)
+	sma200 = daily['SMA_200']
+	key = f'DASHBOARD:DATA:SMA200:{symbol}'
+	yfinance_dashboard_save(symbol, key, sma200)
 	bb_lo = daily['BB_LOWER']
 	bb_mid = daily['BB_MID']
 	bb_hi = daily['BB_UPPER']
