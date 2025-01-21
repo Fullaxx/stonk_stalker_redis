@@ -141,10 +141,13 @@ function cell_update(info, datatag)
   } else if(datatag == 'dtr') {
     data = info.dtr;
   } else if(datatag == 'bb') {
-    if(typeof(info.bbpct) == 'number') {
-      bbpval = info.bbpct * 100.0;
-      data = bbpval.toFixed(2).toString() + '%'
-    }
+    if(typeof(info.bbpct) != 'number') { return; }
+    if(typeof(info.currentPrice) != 'number') { return; }
+    bbpval = info.bbpct * 100.0;
+    data = bbpval.toFixed(0).toString() + '%'
+    remove_all_color(td)
+    if(bbpval < 0) { td.classList.add('neg_eight'); }
+    if(bbpval > 100) { td.classList.add('pos_eight'); }
   } else if(datatag == 'macd') {
     data = info.macdh;
   } else if(datatag == 'support') {
