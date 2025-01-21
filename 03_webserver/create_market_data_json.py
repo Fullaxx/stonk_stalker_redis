@@ -41,6 +41,7 @@ def prepare_symbol(symbol):
 		'dtr':'',
 		'bbpct':'',
 		'macdh':'',
+		'sma200':'',
 		'support':'',
 		'bookValue':'',
 		'forwardPE':'',
@@ -75,6 +76,8 @@ def prepare_symbol(symbol):
 	if bbpct is not None: symb_dict['bbpct'] = float(bbpct)
 	macdh = g_rc.get(f'DASHBOARD:DATA:MACDHEIGHT:{symbol}')
 	if macdh is not None: symb_dict['macdh'] = float(macdh)
+	sma200 = g_rc.get(f'DASHBOARD:DATA:SMA200:{symbol}')
+	if sma200 is not None: symb_dict['sma200'] = float(sma200)
 	support = g_rc.get(f'DASHBOARD:DATA:SUPPORT:{symbol}')
 	if support is not None: symb_dict['support'] = float(support)
 

@@ -149,6 +149,8 @@ function cell_update(info, datatag)
     data = info.macdh;
   } else if(datatag == 'support') {
     data = info.support;
+  } else if(datatag == 'sma200') {
+    data = info.sma200;
   }
 
   if(typeof(data) == 'number') {
@@ -167,6 +169,7 @@ function update_symbol(obj)
   cell_update(obj, 'bb');
   cell_update(obj, 'dtr');
   cell_update(obj, 'macd');
+  //cell_update(obj, 'sma200');
   //cell_update(obj, 'support');
   cell_update(obj, 'pbRatio');
   cell_update(obj, 'forwardPE');

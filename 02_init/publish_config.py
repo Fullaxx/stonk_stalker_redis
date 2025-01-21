@@ -62,6 +62,12 @@ def check_dc(dc):
 	check_dc_int_value(dc, 'MARKET_DATA_CREATE_INTERVAL', 2)
 	check_dc_int_value(dc, 'JSON_FETCH_INTERVAL', 3000)
 
+	check_dc_bool_value(dc, 'DISPLAY_YTD', True)
+	check_dc_bool_value(dc, 'DISPLAY_BBANDS', False)
+	check_dc_bool_value(dc, 'DISPLAY_MACD', False)
+	check_dc_bool_value(dc, 'DISPLAY_SUPPORT', False)
+	check_dc_bool_value(dc, 'DISPLAY_SMA200', False)
+
 	check_dc_bool_value(dc, 'DISPLAY_MARKET_CAP', False)
 	check_dc_bool_value(dc, 'DISPLAY_FPE_RATIO', False)
 	check_dc_bool_value(dc, 'DISPLAY_PST12_RATIO', False)

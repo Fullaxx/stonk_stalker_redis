@@ -135,33 +135,45 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 		html += f'<td id={fsymb}_previousClose></td>'
 	html += '</tr>'
 
-	html += '<tr>'
-	html += '<td>YTD</td>'
-	for symb in symbols_list:
-		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_ytd></td>'
-	html += '</tr>'
+	if dc['DISPLAY_YTD']:
+		html += '<tr>'
+		html += '<td>YTD</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id={fsymb}_ytd></td>'
+		html += '</tr>'
 
-	html += '<tr>'
-	html += '<td>BB</td>'
-	for symb in symbols_list:
-		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_bb></td>'
-	html += '</tr>'
+	if dc['DISPLAY_BBANDS']:
+		html += '<tr>'
+		html += '<td>BB</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id={fsymb}_bb></td>'
+		html += '</tr>'
 
-	html += '<tr>'
-	html += '<td>MACD</td>'
-	for symb in symbols_list:
-		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_macd></td>'
-	html += '</tr>'
+	if dc['DISPLAY_MACD']:
+		html += '<tr>'
+		html += '<td>MACD</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id={fsymb}_macd></td>'
+		html += '</tr>'
 
-	html += '<tr>'
-	html += '<td>SUPPORT</td>'
-	for symb in symbols_list:
-		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_support></td>'
-	html += '</tr>'
+	if dc['DISPLAY_SUPPORT']:
+		html += '<tr>'
+		html += '<td>SUPPORT</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id={fsymb}_support></td>'
+		html += '</tr>'
+
+	if dc['DISPLAY_SMA200']:
+		html += '<tr>'
+		html += '<td>SMA200</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id={fsymb}_sma200></td>'
+		html += '</tr>'
 
 	if (table_type == 'stock') or (table_type == 'crypto'):
 		if dc['DISPLAY_MARKET_CAP']:
