@@ -17,7 +17,7 @@ from redis_helpers import connect_to_redis,is_market_open
 
 g_debug_python = False
 g_ticker2redis_set_key = 'YFINANCE:LAUNCHER:TICKER2REDIS:SET'
-g_dailystats2redis_set_key = 'YFINANCE:LAUNCHER:INDICATORS2REDIS:SET'
+g_dailystats2redis_set_key = 'YFINANCE:LAUNCHER:DAILYSTATS2REDIS:SET'
 
 g_shutdown = False
 def signal_handler(sig, frame):
