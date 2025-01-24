@@ -50,7 +50,7 @@ function ercal_dropdown_selected()
   }
 }
 
-function market_calendars_init()
+function html_config_init()
 {
   document.getElementById('ercal_dropedown').addEventListener('click', ercal_dropdown_selected);
 }

@@ -9,7 +9,7 @@
 		"DISPLAY_MACD"                : true,
 		"DISPLAY_SUPPORT"             : true,
 		"DISPLAY_SMA200"              : true,
-		"DISPLAY_MARKET_CAP"          : true,
+		"DISPLAY_MCAP"                : true,
 		"DISPLAY_FPE"                 : true,
 		"DISPLAY_PST12"               : false,
 		"DISPLAY_TPEG"                : true,
