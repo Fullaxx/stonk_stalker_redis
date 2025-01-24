@@ -20,13 +20,13 @@ def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
 
-def update_prevclose(symbols_set):
+def update_prevclose(symbols_set, verbose):
 	for s in symbols_set:
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{s}'
 		cp = g_rc.get(key)
 		if cp is None: continue
 		prev_close_key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{s}'
-		print(f'Setting {prev_close_key:<40} ${cp}', flush=True)
+		if verbose: print(f'Setting {prev_close_key:<40} ${cp}', flush=True)
 		g_rc.set(prev_close_key, cp)
 
 def acquire_environment():
@@ -47,6 +47,7 @@ def acquire_environment():
 if __name__ == '__main__':
 	parser = ArgumentParser()
 	parser.add_argument('--crypto', '-c', required=False, default=False, action='store_true')
+	parser.add_argument('--verbose', '-v', required=False, default=False, action='store_true')
 	args = parser.parse_args()
 
 	redis_url = acquire_environment()
@@ -56,7 +57,7 @@ if __name__ == '__main__':
 #	Which means their PREVIOUSCLOSE must be handled differently
 	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
 	if args.crypto:
-		update_prevclose(crypto_set)
+		update_prevclose(crypto_set, args.verbose)
 		sys.exit(0)
 
 #	Everything else runs on the NYSE market clock
@@ -65,4 +66,4 @@ if __name__ == '__main__':
 	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
 	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
 	symbols_set = stock_set.union(index_set).union(etf_set).union(future_set)
-	update_prevclose(symbols_set)
+	update_prevclose(symbols_set, args.verbose)
