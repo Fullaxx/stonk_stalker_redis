@@ -24,14 +24,14 @@ def write_to_file(text, filename):
 		f.write(text)
 		f.close()
 
-def create_er_cal_list():
+def create_ercal_list():
 	html = ''
 
 	earnings_bundle_str = g_rc.get('DASHBOARD:DATA:ERCAL:BUNDLE')
 	if earnings_bundle_str is None: return html
 	ercal = json.loads(earnings_bundle_str)
 
-	html += '<table id=ercallist hidden>'
+	html += f'<table id="ercallist" hidden>'
 	html += '<tr><th colspan=3>Upcoming Earnings Calendar List</th></tr>'
 	for w in ['pr', '1w', '2w', '3w', '4w', '5w', '6w']:
 		this_week = ercal[w]
@@ -53,14 +53,14 @@ def todays_reports(this_week, day):
 			return v['symbols']
 	return ''
 
-def create_er_cal_grid():
+def create_ercal_grid():
 	html = ''
 
 	earnings_bundle_str = g_rc.get('DASHBOARD:DATA:ERCAL:BUNDLE')
 	if earnings_bundle_str is None: return html
 	ercal = json.loads(earnings_bundle_str)
 
-	html += '<table id=ercalgrid>'
+	html += f'<table id="ercalgrid">'
 	html += '<tr><th colspan=6>Upcoming Earnings Calendar Grid</th></tr>'
 	html += f'<tr><th>Week</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th></tr>'
 	for w in ['1w', '2w', '3w', '4w', '5w', '6w']:
@@ -69,7 +69,7 @@ def create_er_cal_grid():
 		html += f'<td>{w}</td>'
 		for day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']:
 			symbols_str = todays_reports(this_week, day)
-			html += f'<td class=ercal_symbols>{symbols_str}</td>'
+			html += f'<td class="ercal_symbols">{symbols_str}</td>'
 		html += f'</tr>'
 
 	html += '</table>'
@@ -84,15 +84,15 @@ def create_mini_cal():
 	months_list = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 	html += '<table>'
-	html += f'<tr><th colspan=12 id=marketclock>MARKETCLOCK</th></tr>'
-	html += f'<tr><th colspan=12 id=marketstatus>MARKETSTATUSINIT</th></tr>'
+	html += f'<tr><th colspan=12 id="marketclock">MARKETCLOCK</th></tr>'
+	html += f'<tr><th colspan=12 id="marketstatus">MARKETSTATUSINIT</th></tr>'
 
 	html += '<tr>'
 	for month in months_list:
 		if month in red_months_list:
 			html += f'<td class=redmonth>{month}</td>'
 		elif month in green_months_list:
-			html += f'<td class=greenmonth>{month}</td>'
+			html += f'<td class="greenmonth">{month}</td>'
 		else:
 			html += f'<td>{month}</td>'
 	html += '</tr>'
@@ -111,130 +111,183 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
 		yfsymb = fsymb.replace('^','%5E')
-		html += f'<th id={fsymb}_th><a href=https://finance.yahoo.com/quote/{yfsymb}>{symb}</a></th>'
+		html += f'<th id="{fsymb}_th"><a href="https://finance.yahoo.com/quote/{yfsymb}">{symb}</a></th>'
 	html += '</tr>'
 
-	html += '<tr>'
+	html += '<tr class="currentprice_row">'
 	html += '<td>$</td>'
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_currentPrice></td>'
+		html += f'<td id="{fsymb}_currentPrice"></td>'
 	html += '</tr>'
 
-	html += '<tr>'
+	html += '<tr class="move_row">'
 	html += '<td>%</td>'
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_move></td>'
+		html += f'<td id="{fsymb}_move"></td>'
 	html += '</tr>'
 
-	html += '<tr>'
+	html += '<tr class="close_row">'
 	html += '<td>Close</td>'
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
-		html += f'<td id={fsymb}_previousClose></td>'
+		html += f'<td id="{fsymb}_previousClose"></td>'
 	html += '</tr>'
 
-	if dc['DISPLAY_YTD']:
-		html += '<tr>'
-		html += '<td>YTD</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_ytd></td>'
-		html += '</tr>'
+	hidden = '' if dc['DISPLAY_YTD'] else 'hidden'
+	html += f'<tr class="ytd_row" {hidden}>'
+	html += '<td>YTD</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id="{fsymb}_ytd"></td>'
+	html += '</tr>'
 
-	if dc['DISPLAY_BBANDS']:
-		html += '<tr>'
-		html += '<td>BB</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_bb></td>'
-		html += '</tr>'
+	hidden = '' if dc['DISPLAY_BB'] else 'hidden'
+	html += f'<tr class="bb_row" {hidden}>'
+	html += '<td>BB</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id="{fsymb}_bb"></td>'
+	html += '</tr>'
 
-	if dc['DISPLAY_MACD']:
-		html += '<tr>'
-		html += '<td>MACD</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_macd></td>'
-		html += '</tr>'
+	hidden = '' if dc['DISPLAY_MACD'] else 'hidden'
+	html += f'<tr class="macd_row" {hidden}>'
+	html += '<td>MACD</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id="{fsymb}_macd"></td>'
+	html += '</tr>'
 
-	if dc['DISPLAY_SUPPORT']:
-		html += '<tr>'
-		html += '<td>SUPPORT</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_support></td>'
-		html += '</tr>'
+	hidden = '' if dc['DISPLAY_SUPPORT'] else 'hidden'
+	html += f'<tr class="support_row" {hidden}>'
+	html += '<td>SUPPORT</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id="{fsymb}_support"></td>'
+	html += '</tr>'
 
-	if dc['DISPLAY_SMA200']:
-		html += '<tr>'
-		html += '<td>SMA200</td>'
-		for symb in symbols_list:
-			fsymb = symb.replace('/','-')
-			html += f'<td id={fsymb}_sma200></td>'
-		html += '</tr>'
+	hidden = '' if dc['DISPLAY_SMA200'] else 'hidden'
+	html += f'<tr class="sma200_row" {hidden}>'
+	html += '<td>SMA200</td>'
+	for symb in symbols_list:
+		fsymb = symb.replace('/','-')
+		html += f'<td id="{fsymb}_sma200"></td>'
+	html += '</tr>'
 
 	if (table_type == 'stock') or (table_type == 'crypto'):
-		if dc['DISPLAY_MARKET_CAP']:
-			html += '<tr>'
-			html += '<td>MCap</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_mcap></td>'
-			html += '</tr>'
-
-	if (table_type == 'stock'):
-		if dc['DISPLAY_FPE_RATIO']:
-			html += '<tr>'
-			html += '<td>FPE</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_forwardPE></td>'
-			html += '</tr>'
-
-		if dc['DISPLAY_PST12_RATIO']:
-			html += '<tr>'
-			html += '<td>PST12</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_priceToSalesTrailing12Months></td>'
-			html += '</tr>'
-
-		if dc['DISPLAY_PEG_RATIO']:
-			html += '<tr>'
-			html += '<td>tPEG</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_trailingPegRatio></td>'
-			html += '</tr>'
-
-		if dc['DISPLAY_PB_RATIO']:
-			html += '<tr>'
-			html += '<td>PB</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_pbRatio></td>'
-			html += '</tr>'
-
-		if dc['DISPLAY_DTR']:
-			html += '<tr>'
-			html += '<td>DTR</td>'
-			for symb in symbols_list:
-				fsymb = symb.replace('/','-')
-				html += f'<td id={fsymb}_dtr></td>'
-			html += '</tr>'
-
-	if dc['DISPLAY_OTHER_URLS']:
-		html += '<tr>'
-		html += '<td>URLS</td>'
+		hidden = '' if dc['DISPLAY_MCAP'] else 'hidden'
+		html += f'<tr class="mcap_row" {hidden}>'
+		html += '<td>MCap</td>'
 		for symb in symbols_list:
-			yfsymb = symb.replace('/','-').replace('^','%5E')
-			gfsymb = symb.replace('/','-').replace('^','%5E')
-			html += f'<td><a href=https://finance.yahoo.com/quote/{yfsymb}>YF</a>/<a href=https://gurufocus.com/stock/{gfsymb}>GF</a></td>'
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_mcap"></td>'
 		html += '</tr>'
 
+	if (table_type == 'stock'):
+		hidden = '' if dc['DISPLAY_FPE'] else 'hidden'
+		html += f'<tr class="fpe_row" {hidden}>'
+		html += '<td>FPE</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_forwardPE"></td>'
+		html += '</tr>'
+
+		hidden = '' if dc['DISPLAY_PST12'] else 'hidden'
+		html += f'<tr class="pst12_row" {hidden}>'
+		html += '<td>PST12</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_priceToSalesTrailing12Months"></td>'
+		html += '</tr>'
+
+		hidden = '' if dc['DISPLAY_TPEG'] else 'hidden'
+		html += f'<tr class="tpeg_row" {hidden}>'
+		html += '<td>TPEG</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_trailingPegRatio"></td>'
+		html += '</tr>'
+
+		hidden = '' if dc['DISPLAY_PB'] else 'hidden'
+		html += f'<tr class="pb_row" {hidden}>'
+		html += '<td>PB</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_pbRatio"></td>'
+		html += '</tr>'
+
+		hidden = '' if dc['DISPLAY_DTR'] else 'hidden'
+		html += f'<tr class="dtr_row" {hidden}>'
+		html += '<td>DTR</td>'
+		for symb in symbols_list:
+			fsymb = symb.replace('/','-')
+			html += f'<td id="{fsymb}_dtr"></td>'
+		html += '</tr>'
+
+	hidden = '' if dc['DISPLAY_URLS'] else 'hidden'
+	html += f'<tr class="urls_row"> {hidden}'
+	html += '<td>URLS</td>'
+	for symb in symbols_list:
+		yfsymb = symb.replace('/','-').replace('^','%5E')
+		gfsymb = symb.replace('/','-').replace('^','%5E')
+		html += f'<td><a href="https://finance.yahoo.com/quote/{yfsymb}">YF</a>/<a href="https://gurufocus.com/stock/{gfsymb}">GF</a></td>'
+	html += '</tr>'
+
 	html += '</table>'
+	return html
+
+def html_checkbox(label_text, id_text):
+	html = ''
+	key = f'DISPLAY_{label_text}'
+	dc = g_cfg['DASHBOARD_CONFIG']
+	checked_text = 'checked ' if dc[key] else ''
+	html += f'<input type="checkbox" id="checkbox_{id_text}" name="checkbox_{id_text}" onclick="update_{id_text}_rows()" {checked_text}/>'
+	html += f'<label for="checkbox_{id_text}">{label_text}</label>'
+	return html
+
+def gen_html_cfg_buttons():
+	html = '<div>'
+	html += '<table id="config_buttons">'
+	html += '<tr><th colspan=12>Table Display Configuration</th></tr>'
+	html += '<tr>'
+	html += '<td>' + html_checkbox('YTD', 'ytd') + '</td>'
+	html += '<td>' + html_checkbox('BB', 'bb') + '</td>'
+	html += '<td>' + html_checkbox('MACD', 'macd') + '</td>'
+	html += '<td>' + html_checkbox('SUPPORT', 'support') + '</td>'
+	html += '<td>' + html_checkbox('SMA200', 'sma200') + '</td>'
+	html += '<td>' + html_checkbox('MCAP', 'mcap') + '</td>'
+	html += '<td>' + html_checkbox('FPE', 'fpe') + '</td>'
+	html += '<td>' + html_checkbox('PST12', 'pst12') + '</td>'
+	html += '<td>' + html_checkbox('TPEG', 'tpeg') + '</td>'
+	html += '<td>' + html_checkbox('PB', 'pb') + '</td>'
+	html += '<td>' + html_checkbox('DTR', 'dtr') + '</td>'
+	html += '<td>' + html_checkbox('URLS', 'urls') + '</td>'
+	html += '</tr>'
+	html += '</table>'
+	html += '</div>'
+	return html
+
+def create_ercal_dropdown():
+	html = '<div>'
+	html += f'<label for="ercal">Earnings Report Calendar:</label>'
+	html += f'<select name="ercal" id="ercal_dropedown">'
+	html += f'<option value="none">None</option>'
+	html += f'<option value="grid" selected>Grid</option>'
+	html += f'<option value="list">List</option>'
+	html += f'</select>'
+	html += f'</div>'
+	return html
+
+def gen_html_calendars():
+	html = ''
+	html += create_mini_cal()
+	html += '<br>'
+#	html += f'<button onclick="toggleGridHidden()" type="button">Toggle Grid</button>'
+#	html += f'<button onclick="toggleListHidden()" type="button">Toggle List</button>'
+	html += create_ercal_dropdown()
+	html += create_ercal_list()
+	html += create_ercal_grid()
 	return html
 
 def get_total_symbols():
@@ -253,21 +306,18 @@ def gen_html_body():
 	html += '<center>'
 	html += f'<p class=titleheader>Stonk Stalker ({symbols_count} Symbols)</p>'
 
+#	What type of header should we have?
 	dc = g_cfg['DASHBOARD_CONFIG']
 	if dc['PAGE_HEADER_TYPE'] == 'simple':
-		html += '<p class=standalonemarketclock id=marketclock></p>'
+		html += '<p class=standalonemarketclock id="marketclock"></p>'
 	if dc['PAGE_HEADER_TYPE'] == 'calendars':
-		html += create_mini_cal()
-		html += '<br>'
-		html += f'<button onclick="toggleGridHidden()" type="button">Toggle Grid</button>'
-		html += f'<button onclick="toggleListHidden()" type="button">Toggle List</button>'
-		html += '<br>'
-		html += create_er_cal_list()
-		html += '<br>'
-		html += create_er_cal_grid()
+		html += gen_html_calendars()
 
 #	Horizontal Seperator
 	html += '<hr>'
+
+	html += gen_html_cfg_buttons()
+	html += '<br>'
 
 	for k,v in g_cfg.items():
 		if k.startswith('TABLE_'):
@@ -308,8 +358,8 @@ def gen_html_head():
 	html += '<script src="static/market_clock.js"></script>'
 	html += '<script>$(document).ready(function(){ market_clock_init(); });</script>'
 	html += '<script>$(document).ready(function(){ market_status_init(); });</script>'
-	html += '<script src="static/market_calendars.js"></script>'
-	html += '<script>$(document).ready(function(){ market_calendars_init(); });</script>'
+	html += '<script src="static/html_configuration.js"></script>'
+	html += '<script>$(document).ready(function(){ html_config_init(); });</script>'
 	html += '<script src="static/market_data.js"></script>'
 	html += '<script>$(document).ready(function(){ market_data_init(' + str(json_fetch_interval) + '); });</script>'
 	html += '</head>'
