@@ -85,7 +85,7 @@ def create_mini_cal():
 
 	html += '<table>'
 	html += f'<tr><th colspan=12 id="marketclock">MARKETCLOCK</th></tr>'
-	html += f'<tr><th colspan=12 id="marketstatus">MARKETSTATUSINIT</th></tr>'
+	html += f'<tr><td colspan=12 id="marketstatus">MARKETSTATUSINIT</td></tr>'
 
 	html += '<tr>'
 	for month in months_list:
@@ -101,7 +101,7 @@ def create_mini_cal():
 
 	return html
 
-def gen_html_table(k, table_name, table_type, symbols_str, dc):
+def create_symbol_table(k, table_name, table_type, symbols_str, dc):
 	symbols_list = symbols_str.split(',')
 
 	html = '<table>'
@@ -237,7 +237,7 @@ def gen_html_table(k, table_name, table_type, symbols_str, dc):
 	html += '</table>'
 	return html
 
-def html_checkbox(label_text, id_text):
+def create_cfg_checkbox(label_text, id_text):
 	html = ''
 	key = f'DISPLAY_{label_text}'
 	dc = g_cfg['DASHBOARD_CONFIG']
@@ -246,48 +246,46 @@ def html_checkbox(label_text, id_text):
 	html += f'<label for="checkbox_{id_text}">{label_text}</label>'
 	return html
 
-def gen_html_cfg_buttons():
+def create_calendars():
 	html = '<div>'
-	html += '<table id="config_buttons">'
-	html += '<tr><th colspan=12>Table Display Configuration</th></tr>'
-	html += '<tr>'
-	html += '<td>' + html_checkbox('YTD', 'ytd') + '</td>'
-	html += '<td>' + html_checkbox('BB', 'bb') + '</td>'
-	html += '<td>' + html_checkbox('MACD', 'macd') + '</td>'
-	html += '<td>' + html_checkbox('SUPPORT', 'support') + '</td>'
-	html += '<td>' + html_checkbox('SMA200', 'sma200') + '</td>'
-	html += '<td>' + html_checkbox('MCAP', 'mcap') + '</td>'
-	html += '<td>' + html_checkbox('FPE', 'fpe') + '</td>'
-	html += '<td>' + html_checkbox('PST12', 'pst12') + '</td>'
-	html += '<td>' + html_checkbox('TPEG', 'tpeg') + '</td>'
-	html += '<td>' + html_checkbox('PB', 'pb') + '</td>'
-	html += '<td>' + html_checkbox('DTR', 'dtr') + '</td>'
-	html += '<td>' + html_checkbox('URLS', 'urls') + '</td>'
-	html += '</tr>'
-	html += '</table>'
+	html += create_mini_cal()
+	html += '<br>'
+	html += create_ercal_list()
+	html += create_ercal_grid()
 	html += '</div>'
 	return html
 
-def create_ercal_dropdown():
+def gen_html_configuration_table(dc):
 	html = '<div>'
-	html += f'<label for="ercal">Earnings Report Calendar:</label>'
-	html += f'<select name="ercal" id="ercal_dropedown">'
-	html += f'<option value="none">None</option>'
-	html += f'<option value="grid" selected>Grid</option>'
-	html += f'<option value="list">List</option>'
-	html += f'</select>'
-	html += f'</div>'
-	return html
-
-def gen_html_calendars():
-	html = ''
-	html += create_mini_cal()
-	html += '<br>'
-#	html += f'<button onclick="toggleGridHidden()" type="button">Toggle Grid</button>'
-#	html += f'<button onclick="toggleListHidden()" type="button">Toggle List</button>'
-	html += create_ercal_dropdown()
-	html += create_ercal_list()
-	html += create_ercal_grid()
+	html += '<table id="configuration">'
+	html += '<tr><th colspan=12>Display Configuration</th></tr>'
+	if dc['PAGE_HEADER_TYPE'] == 'calendars':
+		html += '<tr>'
+		html += '<th colspan=12>'
+		html += '<label for="ercal">Earnings Report Calendar:</label>'
+		html += '<select name="ercal" id="ercal_dropedown">'
+		html += '<option value="none">None</option>'
+		html += '<option value="grid" selected>Grid</option>'
+		html += '<option value="list">List</option>'
+		html += '</select>'
+		html += '</th>'
+		html += '</tr>'
+	html += '<tr>'
+	html += '<td>' + create_cfg_checkbox('YTD', 'ytd') + '</td>'
+	html += '<td>' + create_cfg_checkbox('BB', 'bb') + '</td>'
+	html += '<td>' + create_cfg_checkbox('MACD', 'macd') + '</td>'
+	html += '<td>' + create_cfg_checkbox('SUPPORT', 'support') + '</td>'
+	html += '<td>' + create_cfg_checkbox('SMA200', 'sma200') + '</td>'
+	html += '<td>' + create_cfg_checkbox('MCAP', 'mcap') + '</td>'
+	html += '<td>' + create_cfg_checkbox('FPE', 'fpe') + '</td>'
+	html += '<td>' + create_cfg_checkbox('PST12', 'pst12') + '</td>'
+	html += '<td>' + create_cfg_checkbox('TPEG', 'tpeg') + '</td>'
+	html += '<td>' + create_cfg_checkbox('PB', 'pb') + '</td>'
+	html += '<td>' + create_cfg_checkbox('DTR', 'dtr') + '</td>'
+	html += '<td>' + create_cfg_checkbox('URLS', 'urls') + '</td>'
+	html += '</tr>'
+	html += '</table>'
+	html += '</div>'
 	return html
 
 def get_total_symbols():
@@ -298,27 +296,27 @@ def get_total_symbols():
 	future_count = g_rc.scard('DASHBOARD:SYMBOLS_SET:FUTURE')
 	return int(stocks_count) + int(crypto_count) + int(index_count) + int(etf_count) + int(future_count)
 
-def gen_html_body():
+def create_html_body():
+#	Grab the Dashboard Config
+	dc = g_cfg['DASHBOARD_CONFIG']
+
 #	Get total count of symbols we are tracking
 	symbols_count = get_total_symbols()
 
 	html = '<body>'
 	html += '<center>'
-	html += f'<p class=titleheader>Stonk Stalker ({symbols_count} Symbols)</p>'
-
-#	What type of header should we have?
-	dc = g_cfg['DASHBOARD_CONFIG']
-	if dc['PAGE_HEADER_TYPE'] == 'simple':
-		html += '<p class=standalonemarketclock id="marketclock"></p>'
-	if dc['PAGE_HEADER_TYPE'] == 'calendars':
-		html += gen_html_calendars()
-
-#	Horizontal Seperator
+	html += f'<p class="titleheader">Stonk Stalker ({symbols_count} Symbols)</p>'
+	html += gen_html_configuration_table(dc)
 	html += '<hr>'
 
-	html += gen_html_cfg_buttons()
-	html += '<br>'
+#	What type of header should we have?
+	if dc['PAGE_HEADER_TYPE'] == 'simple':
+		html += '<p class="standalonemarketclock" id="marketclock"></p>'
+	if dc['PAGE_HEADER_TYPE'] == 'calendars':
+		html += create_calendars()
+	html += '<hr>'
 
+#	Generate all the tables
 	for k,v in g_cfg.items():
 		if k.startswith('TABLE_'):
 			table_name = v['TABLENAME']
@@ -334,7 +332,7 @@ def gen_html_body():
 			if (table_type == 'stock'):
 				key = f'DASHBOARD:TABLES:SORTED:MCAP:{table_name}'
 			symbols_str = g_rc.get(key)
-			html += gen_html_table(k, table_name, table_type, symbols_str, dc)
+			html += create_symbol_table(k, table_name, table_type, symbols_str, dc)
 			html += '<br>'
 
 	html += '<a href="https://github.com/Fullaxx/stonk_stalker_redis">Source Code on GitHub</a>'
@@ -342,7 +340,7 @@ def gen_html_body():
 	html += '</body>'
 	return html
 
-def gen_html_head():
+def create_html_head():
 	dash_config = g_cfg['DASHBOARD_CONFIG']
 	json_fetch_interval = dash_config['JSON_FETCH_INTERVAL']
 	dashboard_theme = dash_config['THEME']
@@ -365,11 +363,11 @@ def gen_html_head():
 	html += '</head>'
 	return html
 
-def gen_index_html():
+def creates_index_html():
 	html = '<!DOCTYPE html>'
 	html += '<html lang="en">'
-	html += gen_html_head()
-	html += gen_html_body()
+	html += create_html_head()
+	html += create_html_body()
 	html += '</html>'
 	write_to_file(html, 'index.html')
 
@@ -399,4 +397,4 @@ if __name__ == '__main__':
 
 	cfg_str = g_rc.get('DASHBOARD:CONFIG')
 	g_cfg = json.loads(cfg_str)
-	gen_index_html()
+	creates_index_html()
