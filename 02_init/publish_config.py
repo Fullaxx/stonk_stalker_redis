@@ -63,18 +63,18 @@ def check_dc(dc):
 	check_dc_int_value(dc, 'JSON_FETCH_INTERVAL', 3000)
 
 	check_dc_bool_value(dc, 'DISPLAY_YTD', True)
-	check_dc_bool_value(dc, 'DISPLAY_BBANDS', False)
+	check_dc_bool_value(dc, 'DISPLAY_BB', False)
 	check_dc_bool_value(dc, 'DISPLAY_MACD', False)
 	check_dc_bool_value(dc, 'DISPLAY_SUPPORT', False)
 	check_dc_bool_value(dc, 'DISPLAY_SMA200', False)
 
-	check_dc_bool_value(dc, 'DISPLAY_MARKET_CAP', False)
-	check_dc_bool_value(dc, 'DISPLAY_FPE_RATIO', False)
-	check_dc_bool_value(dc, 'DISPLAY_PST12_RATIO', False)
-	check_dc_bool_value(dc, 'DISPLAY_PEG_RATIO', False)
-	check_dc_bool_value(dc, 'DISPLAY_PB_RATIO', False)
+	check_dc_bool_value(dc, 'DISPLAY_MCAP', False)
+	check_dc_bool_value(dc, 'DISPLAY_FPE', False)
+	check_dc_bool_value(dc, 'DISPLAY_PST12', False)
+	check_dc_bool_value(dc, 'DISPLAY_TPEG', False)
+	check_dc_bool_value(dc, 'DISPLAY_PB', False)
 	check_dc_bool_value(dc, 'DISPLAY_DTR', False)
-	check_dc_bool_value(dc, 'DISPLAY_OTHER_URLS', False)
+	check_dc_bool_value(dc, 'DISPLAY_URLS', False)
 
 #	Check the sanity of the JSON config file
 def check_config(cfg):
