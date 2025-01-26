@@ -16,8 +16,6 @@ sys.path.append('/app')
 from redis_helpers import connect_to_redis,is_market_open
 
 g_debug_python = False
-g_ticker2redis_set_key = 'YFINANCE:LAUNCHER:TICKER2REDIS:SET'
-g_dailystats2redis_set_key = 'YFINANCE:LAUNCHER:DAILYSTATS2REDIS:SET'
 
 g_shutdown = False
 def signal_handler(sig, frame):
@@ -30,36 +28,6 @@ def eprint(*args, **kwargs):
 def bailmsg(*args, **kwargs):
 	eprint(*args, **kwargs)
 	sys.exit(1)
-
-def reload_dailystats2redis():
-	searchpattern = f'DASHBOARD:TABLES:*'
-	tables_list = sorted(g_rc.scan_iter(searchpattern))
-	num_updated = g_rc.sadd(g_dailystats2redis_set_key, *tables_list)
-	print(f'{g_dailystats2redis_set_key} RELOADED: {num_updated} added', flush=True)
-
-def launch_dailystats2redis():
-	random_table = g_rc.spop(g_dailystats2redis_set_key)
-	if (random_table is None): reload_dailystats2redis()
-	else: os.system(f'./dailystats2redis.py -k {random_table}')
-
-# Acquire the complete set of symbols from redis
-# Reload set at g_ticker2redis_set_key to a set of all tickers
-def reload_ticker2redis():
-	stock_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
-	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	index_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
-	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
-	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
-	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
-	num_updated = g_rc.sadd(g_ticker2redis_set_key, *symbols_set)
-	print(f'{g_ticker2redis_set_key} RELOADED: {num_updated} added', flush=True)
-
-# Pop a random ticker from g_ticker2redis_set_key
-# If our set is empty, reload it with the above function
-def launch_ticker2redis():
-	random_ticker = g_rc.spop(g_ticker2redis_set_key)
-	if (random_ticker is None): reload_ticker2redis()
-	else: os.system(f'./ticker2redis.py -s {random_ticker}')
 
 def every_60m():
 	pass
@@ -83,8 +51,8 @@ def every_5m():
 	os.system(f'./livebars2redis.py')
 
 # Every minute that the market is closed, we will:
-# * call launch_ticker2redis()     if Sat or Sun or during the hours of 2000 - 0359
-# * call launch_dailystats2redis() if Sat or Sun or during the hours of 2000 - 2359
+# * call update_random_ticker_info.py if Sat or Sun or during the hours of 2000 - 0359
+# * call update_random_table_stats.py if Sat or Sun or during the hours of 2000 - 2359
 def every_60s():
 	if g_market_is_open: return
 
@@ -92,10 +60,10 @@ def every_60s():
 	hour = g_now_dt.strftime('%H')
 	ticker_hours = ('20','21','22','23','00','01','02','03')
 	if ((day > 4) or (hour.startswith(ticker_hours))):
-		launch_ticker2redis()
+		os.system(f'./update_random_ticker_info.py')
 	indicators_hours = ('20','21','22','23')
 	if ((day > 4) or (hour.startswith(indicators_hours))):
-		launch_dailystats2redis()
+		os.system(f'./update_random_table_stats.py')
 
 def every_1s():
 	global g_market_is_open
@@ -108,7 +76,9 @@ def chdir_if_production():
 		te = os.path.exists('/app/ticker2redis.py')
 		lbe = os.path.exists('/app/livebars2redis.py')
 		dse = os.path.exists('/app/dailystats2redis.py')
-		if (yfle and erce and te and lbe and dse):
+		urtie = os.path.exists('/app/update_random_ticker_info.py')
+		urtse = os.path.exists('/app/update_random_table_stats.py')
+		if (yfle and erce and te and lbe and dse and urtie and urtse):
 			os.chdir('/app')
 
 def acquire_environment():
