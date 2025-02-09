@@ -20,6 +20,7 @@ sys.path.append('/app')
 from redis_helpers import connect_to_redis,is_market_open
 
 g_debug_python = False
+g_debug_open_market = False
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -119,7 +120,7 @@ def process_funds(symbols_list):
 		process_bars(df, s)
 
 def acquire_environment():
-	global g_debug_python
+	global g_debug_python, g_debug_open_market
 
 	redis_url = os.getenv('REDIS_URL')
 	if redis_url is None: bailmsg('Set REDIS_URL')
@@ -131,6 +132,13 @@ def acquire_environment():
 		if (debug_env_var == 'on'): g_debug_python = True
 		if (debug_env_var == 'ON'): g_debug_python = True
 
+	debug_env_var = os.getenv('DEBUG_OPEN_MARKET')
+	if debug_env_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (debug_env_var.startswith(flags)): g_debug_open_market = True
+		if (debug_env_var == 'on'): g_debug_open_market = True
+		if (debug_env_var == 'ON'): g_debug_open_market = True
+
 	return redis_url
 
 if __name__ == '__main__':
@@ -138,9 +146,13 @@ if __name__ == '__main__':
 #	if ((g_today.month == 1) and (g_today.day == 1)): bailmsg('Skipping Today (New Years Day)!')
 	g_year = g_today.year
 	if ((g_today.month == 1) and (g_today.day == 1)): g_year = g_year - 1
+
 	redis_url = acquire_environment()
 	g_rc = connect_to_redis(redis_url, True, False, g_debug_python)
-	g_market_is_open = is_market_open(g_rc, 0.1)
+	if g_debug_open_market:
+		g_market_is_open = True
+	else:
+		g_market_is_open = is_market_open(g_rc, 0.1)
 
 #	stock_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
