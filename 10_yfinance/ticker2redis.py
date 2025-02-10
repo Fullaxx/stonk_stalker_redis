@@ -98,12 +98,13 @@ def save_future_info(r, symbol, info):
 		eprint(f'SET {key:<28} FAILED!')
 
 def save_etf_info(r, symbol, info):
-	navPrice = info['navPrice'] if 'navPrice' in info else 0
+#	navPrice = info['navPrice'] if 'navPrice' in info else 0
+	bid = info['bid'] if 'bid' in info else 0
 	info_str = json.dumps(info)
 	key = f'YFINANCE:INFO:ETF:{symbol}'
 	result = r.set(key, info_str)
 	if result:
-		print(f'SET {key:<28} ${navPrice}')
+		print(f'SET {key:<28} ${bid}')
 		publish_message(r, symbol, key)
 	else:
 		eprint(f'SET {key:<28} FAILED!')

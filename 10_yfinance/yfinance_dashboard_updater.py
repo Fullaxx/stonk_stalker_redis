@@ -171,8 +171,8 @@ def yfinance_handle_new_future_info(key, symbol):
 def yfinance_handle_new_etf_info(key, symbol):
 	val = g_rc.get(key)
 	info = json.loads(val)
-	if 'navPrice' in info:
-		val = info['navPrice']
+	if 'bid' in info:
+		val = info['bid']
 		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
 		yfinance_dashboard_save(symbol, key, val)
 	if 'previousClose' in info:
