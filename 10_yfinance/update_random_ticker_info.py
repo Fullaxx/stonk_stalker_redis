@@ -25,10 +25,11 @@ def bailmsg(*args, **kwargs):
 def reload_ticker2redis():
 	stock_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:STOCKS')
 	crypto_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:CRYPTO')
-	index_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
-	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
-	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
-	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
+#	index_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:INDEX')
+#	etf_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:ETF')
+#	future_set = g_rc.smembers('DASHBOARD:SYMBOLS_SET:FUTURE')
+#	symbols_set = stock_set.union(crypto_set).union(index_set).union(etf_set).union(future_set)
+	symbols_set = stock_set.union(crypto_set)
 	num_updated = g_rc.sadd(g_ticker2redis_set_key, *symbols_set)
 	print(f'{g_ticker2redis_set_key} RELOADED: {num_updated} added', flush=True)
 

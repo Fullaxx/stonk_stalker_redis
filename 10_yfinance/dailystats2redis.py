@@ -41,7 +41,7 @@ def publish_daily_stats(yf_symbol, daily):
 	daily['SYMBOL'] = symbol
 	daily['YFSYMBOL'] = yf_symbol
 	json_str = json.dumps(daily)
-	key = f'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'
+	key = f'YFINANCE:DAILYINDICATORS:ALL:{symbol}'
 	g_rc.set(key, json_str)
 	publish_message(symbol, key)
 

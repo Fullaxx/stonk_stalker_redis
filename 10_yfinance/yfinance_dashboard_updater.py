@@ -51,9 +51,12 @@ def yfinance_dashboard_save(symbol, key, val):
 	else:
 		eprint(f'SET {key:<20} FAILED!')
 
-def yfinance_handle_new_stock_dailyindicators(key, symbol):
+def yfinance_handle_new_dailyindicators(key, symbol):
 	val = g_rc.get(key)
 	daily = json.loads(val)
+	close = daily['CLOSE']
+	key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+	yfinance_dashboard_save(symbol, key, close)
 	lyc = daily['LASTYEARCLOSE']
 	key = f'DASHBOARD:DATA:LASTYEARCLOSE:{symbol}'
 	yfinance_dashboard_save(symbol, key, lyc)
@@ -144,43 +147,51 @@ def yfinance_handle_new_crypto_info(key, symbol):
 		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_index_info(key, symbol):
-	val = g_rc.get(key)
-	info = json.loads(val)
-	if 'bid' in info:
-		val = info['bid']
-		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
-	if 'previousClose' in info:
-		val = info['previousClose']
-		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
+#def yfinance_handle_new_index_info(key, symbol):
+#	val = g_rc.get(key)
+#	info = json.loads(val)
+#	if 'bid' in info:
+#		val = info['bid']
+#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
+#	if 'previousClose' in info:
+#		val = info['previousClose']
+#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_future_info(key, symbol):
-	val = g_rc.get(key)
-	info = json.loads(val)
-	if 'bid' in info:
-		val = info['bid']
-		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
-	if 'previousClose' in info:
-		val = info['previousClose']
-		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
+#def yfinance_handle_new_future_info(key, symbol):
+#	val = g_rc.get(key)
+#	info = json.loads(val)
+#	if 'bid' in info:
+#		val = info['bid']
+#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
+#	if 'previousClose' in info:
+#		val = info['previousClose']
+#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
 
-def yfinance_handle_new_etf_info(key, symbol):
-	val = g_rc.get(key)
-	info = json.loads(val)
-	if 'bid' in info:
-		val = info['bid']
-		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
-	if 'previousClose' in info:
-		val = info['previousClose']
-		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-		yfinance_dashboard_save(symbol, key, val)
+#def yfinance_handle_new_etf_info(key, symbol):
+#	val = g_rc.get(key)
+#	info = json.loads(val)
+#	if 'bid' in info:
+#		val = info['bid']
+#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
+#	if 'previousClose' in info:
+#		val = info['previousClose']
+#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
 
-# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:STOCK:{symbol}'}
+#def yfinance_update_prevclose_only(key, symbol):
+#	val = g_rc.get(key)
+#	info = json.loads(val)
+#	if 'previousClose' in info:
+#		val = info['previousClose']
+#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+#		yfinance_dashboard_save(symbol, key, val)
+
+# {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:ALL:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:CALENDAR:STOCK:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:CRYPTO:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:INFO:STOCK:{symbol}'}
@@ -191,20 +202,20 @@ def handle_channel_message(p, msg_obj):
 #	print(msg_obj['channel'])
 	key = msg_obj['data']
 	symbol = key.split(':')[3]
-	if key.startswith('YFINANCE:INFO:ETF:'):
-		yfinance_handle_new_etf_info(key, symbol)
-	if key.startswith('YFINANCE:INFO:FUTURE:'):
-		yfinance_handle_new_future_info(key, symbol)
-	if key.startswith('YFINANCE:INFO:INDEX:'):
-		yfinance_handle_new_index_info(key, symbol)
+#	if key.startswith('YFINANCE:INFO:ETF:'):
+#		yfinance_handle_new_etf_info(key, symbol)
+#	if key.startswith('YFINANCE:INFO:FUTURE:'):
+#		yfinance_handle_new_future_info(key, symbol)
+#	if key.startswith('YFINANCE:INFO:INDEX:'):
+#		yfinance_handle_new_index_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:CRYPTO:'):
 		yfinance_handle_new_crypto_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:STOCK:'):
 		yfinance_handle_new_stock_info(key, symbol)
 	if key.startswith('YFINANCE:CALENDAR:STOCK:'):
 		yfinance_handle_new_stock_calendar(key, symbol)
-	if key.startswith('YFINANCE:DAILYINDICATORS:STOCK:'):
-		yfinance_handle_new_stock_dailyindicators(key, symbol)
+	if key.startswith('YFINANCE:DAILYINDICATORS:ALL:'):
+		yfinance_handle_new_dailyindicators(key, symbol)
 
 def channel_handler(p, msg_obj):
 	if (msg_obj['type'] == 'message'):
