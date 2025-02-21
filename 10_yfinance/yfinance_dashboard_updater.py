@@ -147,49 +147,13 @@ def yfinance_handle_new_crypto_info(key, symbol):
 		key = f'DASHBOARD:DATA:MARKETCAP:{symbol}'
 		yfinance_dashboard_save(symbol, key, val)
 
-#def yfinance_handle_new_index_info(key, symbol):
-#	val = g_rc.get(key)
-#	info = json.loads(val)
-#	if 'bid' in info:
-#		val = info['bid']
-#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-#	if 'previousClose' in info:
-#		val = info['previousClose']
-#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-
-#def yfinance_handle_new_future_info(key, symbol):
-#	val = g_rc.get(key)
-#	info = json.loads(val)
-#	if 'bid' in info:
-#		val = info['bid']
-#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-#	if 'previousClose' in info:
-#		val = info['previousClose']
-#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-
-#def yfinance_handle_new_etf_info(key, symbol):
-#	val = g_rc.get(key)
-#	info = json.loads(val)
-#	if 'bid' in info:
-#		val = info['bid']
-#		key = f'DASHBOARD:DATA:CURRENTPRICE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-#	if 'previousClose' in info:
-#		val = info['previousClose']
-#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
-
-#def yfinance_update_prevclose_only(key, symbol):
-#	val = g_rc.get(key)
-#	info = json.loads(val)
-#	if 'previousClose' in info:
-#		val = info['previousClose']
-#		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
-#		yfinance_dashboard_save(symbol, key, val)
+def yfinance_update_prevclose_only(key, symbol):
+	val = g_rc.get(key)
+	info = json.loads(val)
+	if 'previousClose' in info:
+		val = info['previousClose']
+		key = f'DASHBOARD:DATA:PREVIOUSCLOSE:{symbol}'
+		yfinance_dashboard_save(symbol, key, val)
 
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:DAILYINDICATORS:ALL:{symbol}'}
 # {'type': 'message', 'pattern': None, 'channel': 'SOURCE:YFINANCE:UPDATED', 'data': 'YFINANCE:CALENDAR:STOCK:{symbol}'}
@@ -202,12 +166,15 @@ def handle_channel_message(p, msg_obj):
 #	print(msg_obj['channel'])
 	key = msg_obj['data']
 	symbol = key.split(':')[3]
-#	if key.startswith('YFINANCE:INFO:ETF:'):
-#		yfinance_handle_new_etf_info(key, symbol)
-#	if key.startswith('YFINANCE:INFO:FUTURE:'):
-#		yfinance_handle_new_future_info(key, symbol)
-#	if key.startswith('YFINANCE:INFO:INDEX:'):
-#		yfinance_handle_new_index_info(key, symbol)
+
+#	INDEX,ETF,FUTURE types get their PREVCLOSE values updated fron the Ticker.INFO struct
+	if key.startswith('YFINANCE:INFO:ETF:'):
+		yfinance_update_prevclose_only(key, symbol)
+	if key.startswith('YFINANCE:INFO:FUTURE:'):
+		yfinance_update_prevclose_only(key, symbol)
+	if key.startswith('YFINANCE:INFO:INDEX:'):
+		yfinance_update_prevclose_only(key, symbol)
+
 	if key.startswith('YFINANCE:INFO:CRYPTO:'):
 		yfinance_handle_new_crypto_info(key, symbol)
 	if key.startswith('YFINANCE:INFO:STOCK:'):
