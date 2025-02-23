@@ -11,6 +11,9 @@ sys.path.append('/app')
 from redis_helpers import connect_to_redis,wait_for_ready
 
 g_debug_python = False
+g_index_ytd_always = False
+g_etf_ytd_always = False
+g_future_ytd_always = False
 
 def eprint(*args, **kwargs):
 	print(*args, file=sys.stderr, **kwargs)
@@ -135,8 +138,16 @@ def create_symbol_table(k, table_name, table_type, symbols_str, dc):
 		html += f'<td id="{fsymb}_previousClose"></td>'
 	html += '</tr>'
 
-	hidden = '' if dc['DISPLAY_YTD'] else 'hidden'
-	html += f'<tr class="ytd_row" {hidden}>'
+	ytd_always_on = False
+	if (table_type ==  'index') and (g_index_ytd_always): ytd_always_on = True
+	if (table_type ==    'etf') and (g_etf_ytd_always): ytd_always_on = True
+	if (table_type == 'future') and (g_future_ytd_always): ytd_always_on = True
+
+	if ytd_always_on:
+		html += f'<tr class="ytd_alwayson_row">'
+	else:
+		hidden = '' if dc['DISPLAY_YTD'] else 'hidden'
+		html += f'<tr class="ytd_row" {hidden}>'
 	html += '<td>YTD</td>'
 	for symb in symbols_list:
 		fsymb = symb.replace('/','-')
@@ -372,7 +383,7 @@ def creates_index_html():
 	write_to_file(html, 'index.html')
 
 def acquire_environment():
-	global g_debug_python
+	global g_debug_python, g_index_ytd_always, g_etf_ytd_always, g_future_ytd_always
 
 	wwwdir = os.getenv('WWWDIR')
 	if wwwdir is not None: os.chdir(wwwdir)
@@ -386,6 +397,27 @@ def acquire_environment():
 		if (debug_env_var.startswith(flags)): g_debug_python = True
 		if (debug_env_var == 'on'): g_debug_python = True
 		if (debug_env_var == 'ON'): g_debug_python = True
+
+	index_ytd_var = os.getenv('INDEX_YTD_ALWAYS')
+	if index_ytd_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (index_ytd_var.startswith(flags)): g_index_ytd_always = True
+		if (index_ytd_var == 'on'): g_index_ytd_always = True
+		if (index_ytd_var == 'ON'): g_index_ytd_always = True
+
+	etf_ytd_var = os.getenv('ETF_YTD_ALWAYS')
+	if etf_ytd_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (etf_ytd_var.startswith(flags)): g_etf_ytd_always = True
+		if (etf_ytd_var == 'on'): g_etf_ytd_always = True
+		if (etf_ytd_var == 'ON'): g_etf_ytd_always = True
+
+	future_ytd_var = os.getenv('FUTURE_YTD_ALWAYS')
+	if future_ytd_var is not None:
+		flags = ('1', 'y', 'Y', 't', 'T')
+		if (future_ytd_var.startswith(flags)): g_future_ytd_always = True
+		if (future_ytd_var == 'on'): g_future_ytd_always = True
+		if (future_ytd_var == 'ON'): g_future_ytd_always = True
 
 	return redis_url
 
