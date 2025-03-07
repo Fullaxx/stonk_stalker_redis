@@ -67,11 +67,3 @@ if __name__ == '__main__':
 
 	symbol = pop_random_ticker()
 	os.system(f'./ticker2redis.py -s {symbol}')
-#	sys.exit(0)
-
-#	if args.reset:
-#		reload_ticker2redis()
-#
-#	if args.pop:
-#		t = pop_random_ticker()
-#		if (t is not None): print(t)
